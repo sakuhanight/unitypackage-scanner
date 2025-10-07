@@ -1,0 +1,109 @@
+{
+  "name": "unitypackage-scanner",
+  "version": "0.1.0",
+  "description": "UnityPackage security scanner with pattern matching",
+  "main": "dist/electron.js",
+  "homepage": "https://tsuitachi.net",
+  "author": {
+    "name": "Sakuha Tokimine",
+    "email": "sakuha@tsuitachi.net",
+    "url": "https://tsuitachi.net"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sakuhanight/unitypackage-scanner.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sakuhanight/unitypackage-scanner/issues"
+  },
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "dev:full": "concurrently \"pnpm run dev\" \"pnpm run electron:dev\"",
+    "build": "pnpm run build:renderer && pnpm run build:main",
+    "build:main": "tsc -p tsconfig.main.json && cp electron.js dist/ && cp preload.js dist/",
+    "build:renderer": "vite build",
+    "electron": "electron .",
+    "electron:dev": "nodemon --watch electron.js --exec electron .",
+    "dist": "pnpm run build && pnpm run package",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage",
+    "test:e2e": "playwright test",
+    "lint": "eslint src --ext .ts,.tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,md}\"",
+    "type-check": "tsc --noEmit",
+    "type-check:main": "tsc -p tsconfig.main.json --noEmit",
+    "type-check:renderer": "tsc -p tsconfig.renderer.json --noEmit",
+    "package": "electron-builder",
+    "package:dir": "electron-builder --dir",
+    "package:win": "electron-builder --win",
+    "package:mac": "electron-builder --mac",
+    "package:linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "@reduxjs/toolkit": "^2.0.1",
+    "@types/node": "^20.10.5",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "concurrently": "^8.2.2",
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.56.0",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "postcss": "^8.4.32",
+    "prettier": "^3.1.1",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10",
+    "vitest": "^1.1.0",
+    "playwright": "^1.40.1",
+    "nodemon": "^3.0.2"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-redux": "^9.0.4",
+    "electron-store": "^8.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "build": {
+    "appId": "net.tsuitachi.unitypackage-scanner",
+    "productName": "ゆにぱけスキャナー",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "package.json"
+    ],
+    "extraResources": [],
+    "mac": {
+      "category": "public.app-category.developer-tools"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Development"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

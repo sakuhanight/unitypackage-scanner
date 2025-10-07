@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* アプリ固有のカラーパレット */
+  --color-primary: #4A90E2;
+  --color-success: #5CB85C;
+  --color-warning: #F0AD4E;
+  --color-error: #D9534F;
+  
+  /* セマンティックカラー */
+  --color-critical: var(--color-error);
+  --color-warning-level: var(--color-warning);
+  --color-info: var(--color-primary);
+  --color-safe: var(--color-success);
+}
+
+[data-theme="dark"] {
+  --color-primary: #6BA3F5;
+  /* ダークテーマ用の色調整 */
+}
+
+/* カスタムコンポーネントスタイル */
+.scan-progress-bar {
+  @apply bg-blue-500 h-2 rounded-full transition-all duration-300 ease-out;
+}
+
+.severity-critical {
+  @apply bg-red-100 text-red-800 border-red-200;
+}
+
+.severity-warning {
+  @apply bg-yellow-100 text-yellow-800 border-yellow-200;
+}
+
+.severity-info {
+  @apply bg-blue-100 text-blue-800 border-blue-200;
+}
+
+/* アニメーション */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite;
+}
+
+/* スクロールバーのカスタマイズ */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-lg;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-lg hover:bg-gray-400;
+}
+
+/* ドラッグ&ドロップエリア */
+.drop-area {
+  transition: all 0.3s ease;
+}
+
+.drop-area.drag-over {
+  @apply border-blue-400 bg-blue-50 scale-105;
+}
+
+/* フォーカス状態の改善 */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
