@@ -24,6 +24,7 @@ UnityPackage（.unitypackage）ファイルの内容をパターンマッチン�
 ### 1.4 技術スタック
 - **フロントエンド**: Electron + TypeScript + React
 - **スタイリング**: Tailwind CSS v4
+- **状態管理**: Redux Toolkit (RTK Query含む)
 - **パッケージマネージャ**: pnpm
 - **パッケージング**: Electron Builder
 - **解析エンジン**: 正規表現 + パターンマッチング
@@ -253,9 +254,48 @@ unitypackage-scanner/
 7. UIに結果を表示
 
 ### 4.3 状態管理
-- React Context API
-- 設定: electron-store
-- スキャン結果: メモリ内（セッション単位）
+- **Redux Toolkit**: アプリケーション全体の状態管理
+- **永続化**: electron-store（設定のみ）
+- **セッション状態**: Redux（スキャン結果、UI状態）
+
+**状態の分類:**
+- **Global State (Redux):**
+  - スキャン結果
+  - スキャン進行状態
+  - UI状態（テーマ、言語）
+  - エラー状態
+
+- **Persisted State (electron-store):**
+  - ユーザー設定
+  - 検出パターン設定
+  - 除外ルール
+  - 初回起動フラグ
+
+**Redux Store構成:**
+```typescript
+{
+  scan: {
+    status: 'idle' | 'scanning' | 'completed' | 'error',
+    progress: number,
+    currentFile: string,
+    result: ScanResult | null,
+    error: string | null
+  },
+  settings: {
+    theme: 'light' | 'dark',
+    language: 'ja' | 'en',
+    patternPreset: 'strict' | 'standard' | 'relaxed',
+    customPatterns: Pattern[],
+    excludePaths: string[],
+    maxFileSize: number
+  },
+  ui: {
+    showDisclaimerDialog: boolean,
+    showDetailView: boolean,
+    selectedCategory: string | null
+  }
+}
+```
 
 ## 5. UI/UX設計
 
