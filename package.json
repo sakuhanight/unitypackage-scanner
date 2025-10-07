@@ -1,0 +1,102 @@
+{
+  "name": "unitypackage-scanner",
+  "version": "1.0.0",
+  "description": "Unity Package Scanner - AI-powered analysis tool for .unitypackage files",
+  "main": "dist/main/index.js",
+  "author": {
+    "name": "鴇峰朔華 (Tokimine Sakuha)",
+    "email": "sakuha@tsuitachi.net"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/sakuhanight/unitypackage-scanner",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sakuhanight/unitypackage-scanner.git"
+  },
+  "scripts": {
+    "dev": "concurrently \"pnpm dev:renderer\" \"pnpm dev:main\"",
+    "dev:renderer": "vite --config vite.renderer.config.ts",
+    "dev:main": "pnpm build:main && wait-on http://localhost:3000 && electron dist/main/index.js",
+    "build": "pnpm build:renderer && pnpm build:main",
+    "build:renderer": "vite build --config vite.renderer.config.ts",
+    "build:main": "tsc -p tsconfig.main.json",
+    "package": "electron-builder",
+    "dist": "pnpm build && electron-builder",
+    "lint": "eslint src --ext .ts,.tsx",
+    "lint:fix": "eslint src --ext .ts,.tsx --fix",
+    "type-check": "tsc --noEmit",
+    "clean": "rimraf dist"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.0",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^8.2.2",
+    "electron": "^28.1.0",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "postcss": "^8.5.6",
+    "rimraf": "^5.0.5",
+    "tailwindcss": "^3.4.0",
+    "typescript": "^5.3.3",
+    "vite": "^5.0.10",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "classnames": "^2.3.2",
+    "electron-store": "^8.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.20.1"
+  },
+  "build": {
+    "appId": "net.tsuitachi.unitypackage-scanner",
+    "productName": "ゆにぱけスキャナー",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "assets/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    }
+  }
+}
