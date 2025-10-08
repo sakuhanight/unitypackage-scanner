@@ -20,7 +20,7 @@ export interface ScanResult {
 export interface ScanFinding {
   id: string;
   severity: 'critical' | 'warning' | 'info';
-  category: 'network' | 'fileSystem' | 'process' | 'native' | 'reflection' | 'registry';
+  category: 'network' | 'fileSystem' | 'process' | 'native' | 'reflection' | 'registry' | 'dll';
   pattern: string;
   filePath: string;
   lineNumber: number;

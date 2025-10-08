@@ -151,6 +151,22 @@ export class PatternMatcher {
     const findings: ScanFinding[] = [];
     let findingIdCounter = 1;
 
+    // DLLファイルの存在をチェック
+    const dllFiles = extractedFiles.filter(file => file.type === 'dll');
+    for (const dllFile of dllFiles) {
+      findings.push({
+        id: findingIdCounter.toString(),
+        severity: 'warning',
+        category: 'dll',
+        pattern: 'DLL File',
+        filePath: dllFile.path,
+        lineNumber: 0,
+        context: `DLLファイル: ${dllFile.path}`,
+        description: 'DLLファイルが含まれています。内容を確認してください。'
+      });
+      findingIdCounter++;
+    }
+
     // C#ファイルのみを対象にスキャン
     const scriptFiles = extractedFiles.filter(file => 
       file.type === 'script' && file.content
