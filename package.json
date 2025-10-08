@@ -22,7 +22,7 @@
     "dev": "vite",
     "dev:full": "concurrently \"pnpm run dev\" \"pnpm run electron:dev\"",
     "build": "pnpm run build:renderer && pnpm run build:main",
-    "build:main": "tsc -p tsconfig.main.json && cp preload.js dist/",
+    "build:main": "tsc -p tsconfig.main.json && cp preload.js dist/ && cp -r src/main/resources dist/main/main/",
     "build:renderer": "vite build",
     "electron": "electron .",
     "electron:dev": "nodemon --watch src/main --ext ts --exec \"pnpm run build:main && electron .\"",

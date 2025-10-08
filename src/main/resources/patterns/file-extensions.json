@@ -1,0 +1,212 @@
+{
+  "version": "1.0.0",
+  "name": "File Extension Detection Rules",
+  "description": "File extension-based detection patterns for UnityPackage security scanning",
+  "extensions": {
+    "dll": {
+      "severity": "warning",
+      "category": "dll",
+      "description": "DLLファイルが含まれています。内容を確認してください。",
+      "riskLevel": "medium",
+      "checkContent": false,
+      "metadata": {
+        "fileType": "Dynamic Link Library",
+        "platform": ["windows"],
+        "commonUses": ["ネイティブライブラリ", "プラグイン", "システム拡張"]
+      }
+    },
+    "exe": {
+      "severity": "critical",
+      "category": "executable",
+      "description": "実行可能ファイルが含まれています。非常に危険です。",
+      "riskLevel": "high",
+      "checkContent": false,
+      "metadata": {
+        "fileType": "Executable",
+        "platform": ["windows"],
+        "commonUses": ["アプリケーション", "マルウェア"]
+      }
+    },
+    "so": {
+      "severity": "warning",
+      "category": "native",
+      "description": "共有ライブラリファイルが含まれています。",
+      "riskLevel": "medium",
+      "checkContent": false,
+      "metadata": {
+        "fileType": "Shared Object",
+        "platform": ["linux"],
+        "commonUses": ["ネイティブライブラリ", "プラグイン"]
+      }
+    },
+    "dylib": {
+      "severity": "warning",
+      "category": "native",
+      "description": "動的ライブラリファイルが含まれています。",
+      "riskLevel": "medium",
+      "checkContent": false,
+      "metadata": {
+        "fileType": "Dynamic Library",
+        "platform": ["macos"],
+        "commonUses": ["ネイティブライブラリ", "プラグイン"]
+      }
+    },
+    "bat": {
+      "severity": "critical",
+      "category": "script",
+      "description": "バッチスクリプトファイルが含まれています。",
+      "riskLevel": "high",
+      "checkContent": true,
+      "metadata": {
+        "fileType": "Batch Script",
+        "platform": ["windows"],
+        "commonUses": ["自動化スクリプト", "システム操作"]
+      }
+    },
+    "cmd": {
+      "severity": "critical",
+      "category": "script",
+      "description": "コマンドスクリプトファイルが含まれています。",
+      "riskLevel": "high",
+      "checkContent": true,
+      "metadata": {
+        "fileType": "Command Script",
+        "platform": ["windows"],
+        "commonUses": ["自動化スクリプト", "システム操作"]
+      }
+    },
+    "ps1": {
+      "severity": "critical",
+      "category": "script",
+      "description": "PowerShellスクリプトファイルが含まれています。",
+      "riskLevel": "high",
+      "checkContent": true,
+      "metadata": {
+        "fileType": "PowerShell Script",
+        "platform": ["windows"],
+        "commonUses": ["システム管理", "自動化"]
+      }
+    },
+    "sh": {
+      "severity": "warning",
+      "category": "script",
+      "description": "シェルスクリプトファイルが含まれています。",
+      "riskLevel": "medium",
+      "checkContent": true,
+      "metadata": {
+        "fileType": "Shell Script",
+        "platform": ["linux", "macos"],
+        "commonUses": ["自動化スクリプト", "システム操作"]
+      }
+    },
+    "vbs": {
+      "severity": "critical",
+      "category": "script",
+      "description": "VBScriptファイルが含まれています。",
+      "riskLevel": "high",
+      "checkContent": true,
+      "metadata": {
+        "fileType": "VBScript",
+        "platform": ["windows"],
+        "commonUses": ["自動化スクリプト", "マルウェア"]
+      }
+    },
+    "jar": {
+      "severity": "warning",
+      "category": "archive",
+      "description": "Java アーカイブファイルが含まれています。",
+      "riskLevel": "medium",
+      "checkContent": false,
+      "metadata": {
+        "fileType": "Java Archive",
+        "platform": ["cross-platform"],
+        "commonUses": ["Javaアプリケーション", "ライブラリ"]
+      }
+    },
+    "zip": {
+      "severity": "info",
+      "category": "archive",
+      "description": "圧縮アーカイブファイルが含まれています。",
+      "riskLevel": "low",
+      "checkContent": false,
+      "metadata": {
+        "fileType": "ZIP Archive",
+        "platform": ["cross-platform"],
+        "commonUses": ["ファイル圧縮", "配布パッケージ"]
+      }
+    },
+    "rar": {
+      "severity": "info",
+      "category": "archive",
+      "description": "RARアーカイブファイルが含まれています。",
+      "riskLevel": "low",
+      "checkContent": false,
+      "metadata": {
+        "fileType": "RAR Archive",
+        "platform": ["cross-platform"],
+        "commonUses": ["ファイル圧縮"]
+      }
+    },
+    "7z": {
+      "severity": "info",
+      "category": "archive",
+      "description": "7-Zipアーカイブファイルが含まれています。",
+      "riskLevel": "low",
+      "checkContent": false,
+      "metadata": {
+        "fileType": "7-Zip Archive",
+        "platform": ["cross-platform"],
+        "commonUses": ["ファイル圧縮"]
+      }
+    }
+  },
+  "categories": {
+    "dll": {
+      "name": "DLLファイル",
+      "description": "動的リンクライブラリ",
+      "defaultSeverity": "warning"
+    },
+    "executable": {
+      "name": "実行可能ファイル",
+      "description": "直接実行可能なファイル",
+      "defaultSeverity": "critical"
+    },
+    "native": {
+      "name": "ネイティブライブラリ",
+      "description": "プラットフォーム固有のライブラリ",
+      "defaultSeverity": "warning"
+    },
+    "script": {
+      "name": "スクリプトファイル",
+      "description": "自動実行可能なスクリプト",
+      "defaultSeverity": "critical"
+    },
+    "archive": {
+      "name": "アーカイブファイル",
+      "description": "圧縮・アーカイブファイル",
+      "defaultSeverity": "info"
+    }
+  },
+  "presets": {
+    "strict": {
+      "name": "厳格モード",
+      "description": "すべての拡張子を検出",
+      "enabledExtensions": ["dll", "exe", "so", "dylib", "bat", "cmd", "ps1", "sh", "vbs", "jar", "zip", "rar", "7z"]
+    },
+    "security_focused": {
+      "name": "セキュリティ重視",
+      "description": "実行可能ファイルとスクリプトのみ",
+      "enabledExtensions": ["dll", "exe", "so", "dylib", "bat", "cmd", "ps1", "sh", "vbs"]
+    },
+    "executables_only": {
+      "name": "実行可能ファイルのみ",
+      "description": "直接実行可能なファイルのみ検出",
+      "enabledExtensions": ["exe", "bat", "cmd", "ps1", "vbs"]
+    },
+    "native_libraries": {
+      "name": "ネイティブライブラリ",
+      "description": "DLLとネイティブライブラリのみ",
+      "enabledExtensions": ["dll", "so", "dylib"]
+    }
+  }
+}

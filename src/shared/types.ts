@@ -20,7 +20,7 @@ export interface ScanResult {
 export interface ScanFinding {
   id: string;
   severity: 'critical' | 'warning' | 'info';
-  category: 'network' | 'fileSystem' | 'process' | 'native' | 'reflection' | 'registry' | 'dll';
+  category: 'network' | 'fileSystem' | 'process' | 'native' | 'reflection' | 'registry' | 'dll' | 'executable' | 'script' | 'archive';
   pattern: string;
   filePath: string;
   lineNumber: number;
@@ -57,13 +57,26 @@ export interface ScanProgress {
 export interface ScanOptions {
   maxFileSize?: number;
   tempDir?: string;
-  patterns?: DetectionPattern[];
+  patternFile?: string;
+  patternPreset?: string;
 }
 
-export interface DetectionPattern {
+export interface AppSettings {
+  theme: 'light' | 'dark';
+  language: 'ja' | 'en';
+  patternFile: string;
+  patternPreset: string;
+  customPatterns: CustomPattern[];
+  excludePaths: string[];
+  maxFileSize: number;
+  showDisclaimerOnStartup: boolean;
+}
+
+export interface CustomPattern {
   name: string;
   category: ScanFinding['category'];
   severity: ScanFinding['severity'];
   regex: string;
   description: string;
+  enabled: boolean;
 }

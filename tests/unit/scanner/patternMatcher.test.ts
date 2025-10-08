@@ -1,9 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { PatternMatcher } from '../../../src/main/services/scanner/patternMatcher';
 import { ExtractedFile } from '../../../src/shared/types';
 
 describe('PatternMatcher', () => {
-  const patternMatcher = new PatternMatcher();
+  let patternMatcher: PatternMatcher;
+
+  beforeEach(async () => {
+    patternMatcher = new PatternMatcher();
+    await patternMatcher.initialize();
+  });
 
   describe('DLL File Detection', () => {
     it('should detect DLL files and create warning findings', () => {
@@ -34,7 +39,7 @@ describe('PatternMatcher', () => {
       expect(dllFinding.pattern).toBe('DLL File');
       expect(dllFinding.filePath).toBe('Assets/Plugins/MyLibrary.dll');
       expect(dllFinding.description).toBe('DLLファイルが含まれています。内容を確認してください。');
-      expect(dllFinding.context).toBe('DLLファイル: Assets/Plugins/MyLibrary.dll');
+      expect(dllFinding.context).toBe('Dynamic Link Library: Assets/Plugins/MyLibrary.dll');
     });
 
     it('should detect multiple DLL files', () => {

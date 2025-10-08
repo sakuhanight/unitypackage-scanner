@@ -1,0 +1,188 @@
+{
+  "version": "1.0.0",
+  "name": "Default Security Patterns",
+  "description": "Default pattern set for UnityPackage security scanning",
+  "categories": {
+    "network": {
+      "severity": "warning",
+      "description": "ネットワーク通信の検出",
+      "patterns": [
+        {
+          "name": "UnityWebRequest",
+          "description": "ネットワーク通信が検出されました",
+          "regex": "UnityWebRequest\\s*\\.\\s*(Get|Post|Put|Delete|Head)",
+          "flags": "gi",
+          "severity": "warning"
+        },
+        {
+          "name": "WWW",
+          "description": "HTTP通信（旧API）が検出されました",
+          "regex": "new\\s+WWW\\s*\\(",
+          "flags": "gi",
+          "severity": "warning"
+        },
+        {
+          "name": "HttpClient",
+          "description": "HTTP通信ライブラリの使用が検出されました",
+          "regex": "(HttpClient|WebClient)\\s*\\(",
+          "flags": "gi",
+          "severity": "warning"
+        },
+        {
+          "name": "Socket",
+          "description": "ソケット通信が検出されました",
+          "regex": "(Socket|TcpClient|UdpClient)\\s*\\(",
+          "flags": "gi",
+          "severity": "critical"
+        },
+        {
+          "name": "URL",
+          "description": "URL文字列が検出されました",
+          "regex": "(https?:\\/\\/[^\\s\"']+)",
+          "flags": "gi",
+          "severity": "info"
+        }
+      ]
+    },
+    "fileSystem": {
+      "severity": "warning",
+      "description": "ファイルシステムアクセスの検出",
+      "patterns": [
+        {
+          "name": "File.Delete",
+          "description": "ファイル削除処理が検出されました",
+          "regex": "File\\s*\\.\\s*Delete",
+          "flags": "gi",
+          "severity": "critical"
+        },
+        {
+          "name": "File.WriteAllBytes",
+          "description": "ファイル書き込み処理が検出されました",
+          "regex": "File\\s*\\.\\s*WriteAll(Bytes|Text)",
+          "flags": "gi",
+          "severity": "warning"
+        },
+        {
+          "name": "Directory.Delete",
+          "description": "ディレクトリ削除処理が検出されました",
+          "regex": "Directory\\s*\\.\\s*Delete",
+          "flags": "gi",
+          "severity": "critical"
+        },
+        {
+          "name": "FileStream",
+          "description": "ファイルストリーム操作が検出されました",
+          "regex": "(FileStream|StreamWriter)\\s*\\(",
+          "flags": "gi",
+          "severity": "info"
+        }
+      ]
+    },
+    "process": {
+      "severity": "critical",
+      "description": "プロセス実行の検出",
+      "patterns": [
+        {
+          "name": "Process.Start",
+          "description": "外部プロセス実行が検出されました",
+          "regex": "Process\\s*\\.\\s*Start",
+          "flags": "gi",
+          "severity": "critical"
+        },
+        {
+          "name": "ProcessStartInfo",
+          "description": "プロセス起動設定が検出されました",
+          "regex": "ProcessStartInfo\\s*\\(",
+          "flags": "gi",
+          "severity": "critical"
+        }
+      ]
+    },
+    "native": {
+      "severity": "warning",
+      "description": "ネイティブコード呼び出しの検出",
+      "patterns": [
+        {
+          "name": "DllImport",
+          "description": "ネイティブライブラリの呼び出しが検出されました",
+          "regex": "\\[DllImport\\s*\\(",
+          "flags": "gi",
+          "severity": "warning"
+        },
+        {
+          "name": "Marshal",
+          "description": "メモリマーシャリング操作が検出されました",
+          "regex": "Marshal\\s*\\.\\s*(GetDelegateForFunctionPointer|PtrToStringAnsi)",
+          "flags": "gi",
+          "severity": "warning"
+        }
+      ]
+    },
+    "reflection": {
+      "severity": "info",
+      "description": "リフレクション機能の使用",
+      "patterns": [
+        {
+          "name": "Assembly.Load",
+          "description": "アセンブリの動的ロードが検出されました",
+          "regex": "Assembly\\s*\\.\\s*Load(From)?",
+          "flags": "gi",
+          "severity": "warning"
+        },
+        {
+          "name": "Type.GetType",
+          "description": "型の動的取得が検出されました",
+          "regex": "Type\\s*\\.\\s*GetType",
+          "flags": "gi",
+          "severity": "info"
+        },
+        {
+          "name": "Activator.CreateInstance",
+          "description": "オブジェクトの動的生成が検出されました",
+          "regex": "Activator\\s*\\.\\s*CreateInstance",
+          "flags": "gi",
+          "severity": "info"
+        },
+        {
+          "name": "MethodInfo.Invoke",
+          "description": "メソッドの動的実行が検出されました",
+          "regex": "MethodInfo\\s*\\.\\s*Invoke",
+          "flags": "gi",
+          "severity": "warning"
+        }
+      ]
+    },
+    "registry": {
+      "severity": "critical",
+      "description": "レジストリアクセスの検出",
+      "patterns": [
+        {
+          "name": "Registry.SetValue",
+          "description": "レジストリ書き込みが検出されました",
+          "regex": "Registry(Key)?\\s*\\.\\s*SetValue",
+          "flags": "gi",
+          "severity": "critical"
+        }
+      ]
+    }
+  },
+  "presets": {
+    "strict": {
+      "name": "厳格モード",
+      "description": "すべてのパターンを検出",
+      "enabledCategories": ["network", "fileSystem", "process", "native", "reflection", "registry"]
+    },
+    "standard": {
+      "name": "標準モード（推奨）",
+      "description": "一般的な危険パターンを検出",
+      "enabledCategories": ["network", "fileSystem", "process", "native", "registry"],
+      "excludePatterns": ["URL", "FileStream", "Assembly.Load", "Type.GetType", "Activator.CreateInstance"]
+    },
+    "relaxed": {
+      "name": "緩和モード",
+      "description": "明らかに危険なもののみ検出",
+      "enabledCategories": ["process", "registry"],
+      "excludePatterns": ["MethodInfo.Invoke"]
+    }
+  }
+}

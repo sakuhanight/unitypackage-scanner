@@ -1,148 +1,79 @@
 import { ScanFinding, ExtractedFile } from '../../../shared/types';
+import { PatternLoader, CompiledPattern } from './patternLoader';
+import { ExtensionDetector } from './extensionDetector';
 
 /**
  * パターンマッチングによる検出エンジン
  */
 export class PatternMatcher {
-  private patterns: DetectionPattern[] = [
-    // ネットワーク通信パターン
-    {
-      name: 'UnityWebRequest',
-      category: 'network',
-      severity: 'warning',
-      regex: /UnityWebRequest\s*\.\s*(Get|Post|Put|Delete|Head)/gi,
-      description: 'ネットワーク通信が検出されました'
-    },
-    {
-      name: 'WWW',
-      category: 'network', 
-      severity: 'warning',
-      regex: /new\s+WWW\s*\(/gi,
-      description: 'HTTP通信（旧API）が検出されました'
-    },
-    {
-      name: 'HttpClient',
-      category: 'network',
-      severity: 'warning', 
-      regex: /(HttpClient|WebClient)\s*\(/gi,
-      description: 'HTTP通信ライブラリの使用が検出されました'
-    },
-    {
-      name: 'Socket',
-      category: 'network',
-      severity: 'warning',
-      regex: /(Socket|TcpClient|UdpClient)\s*\(/gi,
-      description: 'ソケット通信が検出されました'
-    },
-    {
-      name: 'URL',
-      category: 'network',
-      severity: 'info',
-      regex: /(https?:\/\/[^\s"']+)/gi,
-      description: 'URL文字列が検出されました'
-    },
+  private patterns: CompiledPattern[] = [];
+  private patternLoader: PatternLoader;
+  private extensionDetector: ExtensionDetector;
 
-    // ファイルシステムアクセス
-    {
-      name: 'File.Delete',
-      category: 'fileSystem',
-      severity: 'warning',
-      regex: /File\s*\.\s*Delete/gi,
-      description: 'ファイル削除処理が検出されました'
-    },
-    {
-      name: 'File.WriteAllBytes',
-      category: 'fileSystem',
-      severity: 'warning',
-      regex: /File\s*\.\s*WriteAll(Bytes|Text)/gi,
-      description: 'ファイル書き込み処理が検出されました'
-    },
-    {
-      name: 'Directory.Delete',
-      category: 'fileSystem',
-      severity: 'warning',
-      regex: /Directory\s*\.\s*Delete/gi,
-      description: 'ディレクトリ削除処理が検出されました'
-    },
-    {
-      name: 'FileStream',
-      category: 'fileSystem',
-      severity: 'info',
-      regex: /(FileStream|StreamWriter)\s*\(/gi,
-      description: 'ファイルストリーム操作が検出されました'
-    },
+  constructor() {
+    this.patternLoader = new PatternLoader();
+    this.extensionDetector = new ExtensionDetector();
+  }
 
-    // プロセス実行
-    {
-      name: 'Process.Start',
-      category: 'process',
-      severity: 'critical',
-      regex: /Process\s*\.\s*Start/gi,
-      description: '外部プロセス実行が検出されました'
-    },
-    {
-      name: 'ProcessStartInfo',
-      category: 'process',
-      severity: 'critical',
-      regex: /ProcessStartInfo\s*\(/gi,
-      description: 'プロセス起動設定が検出されました'
-    },
+  /**
+   * デフォルトパターンを初期化
+   */
+  async initialize(): Promise<void> {
+    this.patterns = await this.patternLoader.loadDefaultPatterns();
+    await this.extensionDetector.initialize();
+  }
 
-    // ネイティブコード
-    {
-      name: 'DllImport',
-      category: 'native',
-      severity: 'warning',
-      regex: /\[DllImport\s*\(/gi,
-      description: 'ネイティブライブラリの呼び出しが検出されました'
-    },
-    {
-      name: 'Marshal',
-      category: 'native',
-      severity: 'warning',
-      regex: /Marshal\s*\.\s*(GetDelegateForFunctionPointer|PtrToStringAnsi)/gi,
-      description: 'メモリマーシャリング操作が検出されました'
-    },
-
-    // リフレクション
-    {
-      name: 'Assembly.Load',
-      category: 'reflection',
-      severity: 'info',
-      regex: /Assembly\s*\.\s*Load(From)?/gi,
-      description: 'アセンブリの動的ロードが検出されました'
-    },
-    {
-      name: 'Type.GetType',
-      category: 'reflection',
-      severity: 'info',
-      regex: /Type\s*\.\s*GetType/gi,
-      description: '型の動的取得が検出されました'
-    },
-    {
-      name: 'Activator.CreateInstance',
-      category: 'reflection',
-      severity: 'info',
-      regex: /Activator\s*\.\s*CreateInstance/gi,
-      description: 'オブジェクトの動的生成が検出されました'
-    },
-    {
-      name: 'MethodInfo.Invoke',
-      category: 'reflection',
-      severity: 'warning',
-      regex: /MethodInfo\s*\.\s*Invoke/gi,
-      description: 'メソッドの動的実行が検出されました'
-    },
-
-    // レジストリアクセス
-    {
-      name: 'Registry.SetValue',
-      category: 'registry',
-      severity: 'critical',
-      regex: /Registry(Key)?\s*\.\s*SetValue/gi,
-      description: 'レジストリ書き込みが検出されました'
+  /**
+   * 指定されたパターンファイルを読み込む
+   */
+  async loadPatterns(filePath: string, presetName?: string): Promise<void> {
+    if (presetName) {
+      this.patterns = await this.patternLoader.loadPatternsWithPreset(filePath, presetName);
+    } else {
+      this.patterns = await this.patternLoader.loadPatternsFromFile(filePath);
     }
-  ];
+  }
+
+  /**
+   * カスタムパターンを追加
+   */
+  addCustomPatterns(customPatterns: CompiledPattern[]): void {
+    this.patterns.push(...customPatterns);
+  }
+
+  /**
+   * 現在のパターン情報を取得
+   */
+  getPatternInfo(): { name: string; description: string; version: string; patternCount: number } | null {
+    const info = this.patternLoader.getPatternFileInfo();
+    if (!info) return null;
+    
+    return {
+      ...info,
+      patternCount: this.patterns.length
+    };
+  }
+
+  /**
+   * 利用可能なプリセット一覧を取得
+   */
+  getAvailablePresets() {
+    return this.patternLoader.getAvailablePresets();
+  }
+
+  /**
+   * 拡張子検出器を取得
+   */
+  getExtensionDetector(): ExtensionDetector {
+    return this.extensionDetector;
+  }
+
+  /**
+   * 拡張子検出設定を更新
+   */
+  async loadExtensionDefinitions(filePath: string, presetName?: string): Promise<void> {
+    await this.extensionDetector.loadExtensionDefinitions(filePath, presetName);
+  }
 
   /**
    * 抽出されたファイルからパターンマッチングを実行
@@ -151,23 +82,26 @@ export class PatternMatcher {
     const findings: ScanFinding[] = [];
     let findingIdCounter = 1;
 
-    // DLLファイルの存在をチェック
-    const dllFiles = extractedFiles.filter(file => file.type === 'dll');
-    for (const dllFile of dllFiles) {
-      findings.push({
+    // 拡張子ベースの検出を実行
+    const extensionFindings = this.extensionDetector.scanFiles(extractedFiles);
+    
+    // 拡張子検出結果をマージ（IDを調整）
+    for (const extensionFinding of extensionFindings) {
+      const standardFinding: ScanFinding = {
         id: findingIdCounter.toString(),
-        severity: 'warning',
-        category: 'dll',
-        pattern: 'DLL File',
-        filePath: dllFile.path,
-        lineNumber: 0,
-        context: `DLLファイル: ${dllFile.path}`,
-        description: 'DLLファイルが含まれています。内容を確認してください。'
-      });
+        severity: extensionFinding.severity,
+        category: extensionFinding.category,
+        pattern: extensionFinding.pattern,
+        filePath: extensionFinding.filePath,
+        lineNumber: extensionFinding.lineNumber,
+        context: extensionFinding.context,
+        description: extensionFinding.description
+      };
+      findings.push(standardFinding);
       findingIdCounter++;
     }
 
-    // C#ファイルのみを対象にスキャン
+    // C#ファイルのみを対象にパターンマッチングスキャン
     const scriptFiles = extractedFiles.filter(file => 
       file.type === 'script' && file.content
     );
@@ -218,10 +152,4 @@ export class PatternMatcher {
   }
 }
 
-interface DetectionPattern {
-  name: string;
-  category: ScanFinding['category'];
-  severity: ScanFinding['severity'];
-  regex: RegExp;
-  description: string;
-}
+// DetectionPatternインターフェースは削除（CompiledPatternを使用）

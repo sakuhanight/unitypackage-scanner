@@ -13,7 +13,10 @@ class Application {
     this.packageParser = new PackageParser();
     this.patternMatcher = new PatternMatcher();
     
-    app.whenReady().then(() => {
+    app.whenReady().then(async () => {
+      // パターンマッチャーを初期化
+      await this.patternMatcher.initialize();
+      
       this.createWindow();
       this.setupIPC();
     });
@@ -132,21 +135,55 @@ class Application {
 
     // 設定の取得
     ipcMain.handle('get-settings', async () => {
+      // TODO: electron-storeなどで永続化された設定を読み込み
       return {
         theme: 'light',
         language: 'ja',
+        patternFile: 'default-patterns.json',
         patternPreset: 'standard',
         customPatterns: [],
         excludePaths: [],
-        maxFileSize: 10485760 // 10MB
+        maxFileSize: 10485760, // 10MB
+        showDisclaimerOnStartup: true
       };
     });
 
     // 設定の更新
     ipcMain.handle('update-settings', async (_, settings) => {
       console.log('Updating settings:', settings);
-      // 実装段階では electron-store などを使用して永続化
+      
+      // パターンファイルまたはプリセットが変更された場合、パターンマッチャーを更新
+      if (settings.patternFile || settings.patternPreset) {
+        try {
+          await this.patternMatcher.loadPatterns(settings.patternFile, settings.patternPreset);
+        } catch (error) {
+          console.error('Failed to load patterns:', error);
+        }
+      }
+      
+      // TODO: electron-storeなどで設定を永続化
       return;
+    });
+
+    // 利用可能なパターンファイル一覧を取得
+    ipcMain.handle('get-available-pattern-files', async () => {
+      try {
+        const { PatternLoader } = await import('./services/scanner/patternLoader');
+        return await PatternLoader.findAvailablePatternFiles();
+      } catch (error) {
+        console.error('Failed to get pattern files:', error);
+        return [];
+      }
+    });
+
+    // パターンファイル情報を取得
+    ipcMain.handle('get-pattern-info', async () => {
+      return this.patternMatcher.getPatternInfo();
+    });
+
+    // 利用可能なプリセット一覧を取得
+    ipcMain.handle('get-available-presets', async () => {
+      return this.patternMatcher.getAvailablePresets();
     });
 
     // ファイルダイアログ
