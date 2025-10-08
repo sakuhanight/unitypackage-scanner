@@ -102,52 +102,88 @@ export class PackageParser {
   }
 
   /**
-   * 展開されたファイルを解析
+   * 展開されたファイルを解析（UnityPackageのGUID構造に対応）
    */
   private async analyzeExtractedFiles(extractDir: string): Promise<ExtractedFile[]> {
     const files: ExtractedFile[] = [];
     
     try {
-      await this.walkDirectory(extractDir, async (filePath: string, stats: fs.Stats) => {
-        const relativePath = path.relative(extractDir, filePath);
-        const ext = path.extname(filePath).toLowerCase();
+      // GUIDディレクトリを探索
+      const guidDirs = await fs.readdir(extractDir);
+      
+      for (const guidDir of guidDirs) {
+        const guidPath = path.join(extractDir, guidDir);
+        const stats = await fs.stat(guidPath);
         
-        let type: ExtractedFile['type'];
-        let content: string | undefined;
-
-        // ファイルタイプを判定
-        if (ext === '.cs') {
-          type = 'script';
-          // C#ファイルの内容を読み込み（サイズ制限あり）
-          if (stats.size < 1024 * 1024) { // 1MB未満のファイルのみ
-            try {
-              content = await fs.readFile(filePath, 'utf-8');
-            } catch {
-              // 読み込みエラーは無視
-            }
+        if (!stats.isDirectory()) continue;
+        
+        // GUID形式かチェック（32文字の16進数）
+        if (!/^[a-fA-F0-9]{32}$/.test(guidDir)) continue;
+        
+        // GUIDディレクトリ内のファイルをチェック
+        const assetPath = path.join(guidPath, 'asset');
+        const pathnamePath = path.join(guidPath, 'pathname');
+        
+        let originalPath: string | undefined;
+        let assetContent: string | undefined;
+        
+        // pathname ファイルから元のパスを取得
+        if (await this.fileExists(pathnamePath)) {
+          try {
+            originalPath = (await fs.readFile(pathnamePath, 'utf-8')).trim();
+          } catch {
+            // pathname読み込みエラー
           }
-        } else if (ext === '.dll') {
-          type = 'dll';
-        } else if (ext === '.meta') {
-          type = 'meta';
-        } else if (['.prefab', '.asset', '.mat', '.unity', '.controller', '.anim'].includes(ext)) {
-          type = 'asset';
-        } else {
-          type = 'other';
         }
+        
+        // asset ファイルの解析
+        if (await this.fileExists(assetPath)) {
+          const assetStats = await fs.stat(assetPath);
+          const ext = originalPath ? path.extname(originalPath).toLowerCase() : '';
+          
+          let type: ExtractedFile['type'];
+          
+          // 元のファイル拡張子でタイプを判定
+          if (ext === '.cs') {
+            type = 'script';
+            // C#ファイルの内容を読み込み（サイズ制限あり）
+            if (assetStats.size < 1024 * 1024) { // 1MB未満のファイルのみ
+              try {
+                assetContent = await fs.readFile(assetPath, 'utf-8');
+              } catch {
+                // 読み込みエラーは無視
+              }
+            }
+          } else if (ext === '.dll') {
+            type = 'dll';
+          } else if (['.prefab', '.asset', '.mat', '.unity', '.controller', '.anim'].includes(ext)) {
+            type = 'asset';
+          } else if (['.png', '.jpg', '.jpeg', '.tif', '.tiff', '.bmp'].includes(ext)) {
+            type = 'texture';
+          } else if (['.fbx', '.obj', '.dae', '.3ds', '.blend'].includes(ext)) {
+            type = 'model';
+          } else if (['.wav', '.mp3', '.ogg', '.aiff'].includes(ext)) {
+            type = 'audio';
+          } else if (['.json', '.xml', '.txt', '.yaml', '.yml'].includes(ext)) {
+            type = 'other';
+          } else {
+            type = 'other';
+          }
 
-        const file: ExtractedFile = {
-          path: relativePath,
-          type,
-          size: stats.size
-        };
+          const file: ExtractedFile = {
+            path: originalPath || `[GUID:${guidDir}]`,
+            type,
+            size: assetStats.size,
+            guid: guidDir
+          };
 
-        if (content !== undefined) {
-          file.content = content;
+          if (assetContent !== undefined) {
+            file.content = assetContent;
+          }
+
+          files.push(file);
         }
-
-        files.push(file);
-      });
+      }
 
       return files;
 
@@ -157,25 +193,17 @@ export class PackageParser {
   }
 
   /**
-   * ディレクトリを再帰的に走査
+   * ファイルの存在確認
    */
-  private async walkDirectory(
-    dir: string,
-    callback: (filePath: string, stats: fs.Stats) => Promise<void>
-  ): Promise<void> {
-    const entries = await fs.readdir(dir, { withFileTypes: true });
-
-    for (const entry of entries) {
-      const fullPath = path.join(dir, entry.name);
-      
-      if (entry.isDirectory()) {
-        await this.walkDirectory(fullPath, callback);
-      } else if (entry.isFile()) {
-        const stats = await fs.stat(fullPath);
-        await callback(fullPath, stats);
-      }
+  private async fileExists(filePath: string): Promise<boolean> {
+    try {
+      await fs.access(filePath);
+      return true;
+    } catch {
+      return false;
     }
   }
+
 
   /**
    * 一時ディレクトリを作成

@@ -41,9 +41,10 @@ export interface PackageInfo {
 
 export interface ExtractedFile {
   path: string;
-  type: 'script' | 'dll' | 'asset' | 'meta' | 'other';
+  type: 'script' | 'dll' | 'asset' | 'texture' | 'model' | 'audio' | 'meta' | 'other';
   size: number;
   content?: string; // C#ファイルの場合のみ
+  guid?: string; // UnityPackageのGUID
 }
 
 export interface ScanProgress {

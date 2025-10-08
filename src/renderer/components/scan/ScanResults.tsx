@@ -64,6 +64,9 @@ export const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => 
       case 'script': return '📄';
       case 'dll': return '⚙️';
       case 'asset': return '🎨';
+      case 'texture': return '🖼️';
+      case 'model': return '🗿';
+      case 'audio': return '🔊';
       case 'meta': return '📝';
       case 'other': return '📁';
       default: return '📄';
@@ -75,6 +78,9 @@ export const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => 
       case 'script': return 'スクリプト';
       case 'dll': return 'DLLファイル';
       case 'asset': return 'アセット';
+      case 'texture': return 'テクスチャ';
+      case 'model': return '3Dモデル';
+      case 'audio': return 'オーディオ';
       case 'meta': return 'メタファイル';
       case 'other': return 'その他';
       default: return type;
@@ -358,6 +364,11 @@ export const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => 
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
                             {getFileTypeDisplayName(file.type)} • {formatFileSize(file.size)}
+                            {file.guid && (
+                              <span className="ml-2 font-mono text-xs bg-gray-200 dark:bg-gray-600 px-1 rounded">
+                                GUID: {file.guid.substring(0, 8)}...
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>

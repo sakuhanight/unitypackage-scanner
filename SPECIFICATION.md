@@ -43,13 +43,70 @@ UnityPackage（.unitypackage）ファイルの内容をパターンマッチン�
 - ファイルサイズ制限: 500MB（設定で変更可能）
 
 #### 2.1.2 パッケージ解析
-- .unitypackage（tar.gz形式）の解凍
-- 含まれるファイル一覧の抽出
-- メタデータの解析:
-  - スクリプトファイル（.cs）
-  - DLLファイル（.dll）
-  - アセットファイル（.prefab, .asset, .mat等）
-  - 依存関係情報
+
+**UnityPackage内部構造の詳細:**
+
+**基本形式:**
+- ファイル形式: tar.gz圧縮アーカイブ
+- 拡張子: .unitypackage
+- エンコーディング: UTF-8
+
+**内部ディレクトリ構造:**
+```
+sample.unitypackage (tar.gz)
+├── [GUID1]/
+│   ├── asset           # 実際のアセットファイル
+│   ├── asset.meta      # Unity メタデータファイル
+│   └── pathname        # 元のファイルパス情報
+├── [GUID2]/
+│   ├── asset
+│   ├── asset.meta
+│   └── pathname
+└── ...
+```
+
+**GUID（Global Unique Identifier）システム:**
+- 各アセットには一意の32文字のGUIDが割り当てられる
+- 形式: `abcd1234efgh5678ijkl9012mnop3456` (32文字の16進数)
+- Unityプロジェクト内でのアセット参照に使用
+
+**ファイル種別:**
+1. **asset**: 実際のアセットデータ
+   - バイナリまたはテキスト形式
+   - 拡張子は元のファイル形式を保持
+   
+2. **asset.meta**: Unityメタデータ
+   - YAML形式
+   - インポート設定、GUID、依存関係情報を含む
+   
+3. **pathname**: 元のファイルパス
+   - テキストファイル
+   - Unity プロジェクト内での元の配置場所
+   - 例: `Assets/Scripts/PlayerController.cs`
+
+**解析対象ファイル:**
+- **スクリプトファイル（.cs）**: C#ソースコード
+- **DLLファイル（.dll）**: コンパイル済みアセンブリ
+- **アセットファイル**: 
+  - .prefab（プレハブ）
+  - .asset（ScriptableObject等）
+  - .mat（マテリアル）
+  - .controller（アニメーターコントローラー）
+  - .anim（アニメーションクリップ）
+  - .unity（シーン）
+- **設定ファイル**:
+  - .json, .xml, .txt等の設定ファイル
+- **リソースファイル**:
+  - .png, .jpg（テクスチャ）
+  - .fbx, .obj（3Dモデル）
+  - .wav, .mp3（オーディオ）
+
+**メタデータ解析内容:**
+- GUIDマッピング（GUID → 実際のファイルパス）
+- ファイル依存関係
+- インポート設定
+- アセットタイプ判定
+- ファイルサイズ・作成日時
 
 #### 2.1.3 パターンマッチング検出
 
