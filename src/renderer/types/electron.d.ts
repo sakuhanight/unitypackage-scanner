@@ -1,3 +1,5 @@
+import { ScanProgress } from '../../shared/types';
+
 // Electron API型定義
 export interface ElectronAPI {
   scanPackage: (filePath: string, options?: any) => Promise<{
@@ -5,6 +7,7 @@ export interface ElectronAPI {
     data?: any;
     error?: { message: string };
   }>;
+  onScanProgress: (callback: (progress: ScanProgress) => void) => () => void;
   getSettings: () => Promise<any>;
   updateSettings: (settings: any) => Promise<void>;
   getVersion: () => Promise<string>;

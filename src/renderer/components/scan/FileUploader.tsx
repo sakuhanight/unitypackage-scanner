@@ -27,21 +27,25 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
     );
     
     if (unityPackageFile) {
-      onFileSelect(unityPackageFile.path || unityPackageFile.name);
+      // Electronでは、ファイルオブジェクトからパスを取得
+      const filePath = (unityPackageFile as any).path || unityPackageFile.name;
+      onFileSelect(filePath);
     }
   }, [onFileSelect]);
 
-  const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      onFileSelect(file.path || file.name);
-    }
-  }, [onFileSelect]);
 
-  const handleButtonClick = useCallback(() => {
-    // デモ用のファイル選択
-    const demoFile = 'sample-package.unitypackage';
-    onFileSelect(demoFile);
+  const handleButtonClick = useCallback(async () => {
+    // Electron APIのファイルダイアログを使用
+    if (window.electronAPI && window.electronAPI.openFileDialog) {
+      try {
+        const filePath = await window.electronAPI.openFileDialog();
+        if (filePath) {
+          onFileSelect(filePath);
+        }
+      } catch (error) {
+        console.error('File dialog error:', error);
+      }
+    }
   }, [onFileSelect]);
 
   return (
@@ -87,27 +91,13 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
             </p>
           </div>
           
-          <div className="space-y-4">
+          <div>
             <button
               onClick={handleButtonClick}
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-lg font-medium transition-colors focus-ring"
             >
               ファイルを選択
             </button>
-            
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              または
-            </div>
-            
-            <label className="inline-block cursor-pointer text-blue-600 hover:text-blue-700 font-medium">
-              <input
-                type="file"
-                className="hidden"
-                accept=".unitypackage"
-                onChange={handleFileSelect}
-              />
-              ローカルファイルを参照
-            </label>
           </div>
         </div>
       </div>

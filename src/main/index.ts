@@ -1,20 +1,35 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import * as path from 'path';
-
+import { PackageParser } from './services/packageParser';
+import { PatternMatcher } from './services/scanner/patternMatcher';
+import { ScanProgress } from '../shared/types';
 
 class Application {
   private mainWindow: BrowserWindow | null = null;
+  private packageParser: PackageParser;
+  private patternMatcher: PatternMatcher;
   
   constructor() {
+    this.packageParser = new PackageParser();
+    this.patternMatcher = new PatternMatcher();
+    
     app.whenReady().then(() => {
       this.createWindow();
       this.setupIPC();
     });
 
-    app.on('window-all-closed', () => {
+    app.on('window-all-closed', async () => {
+      // 一時ファイルをクリーンアップ
+      await this.packageParser.cleanupAll();
+      
       if (process.platform !== 'darwin') {
         app.quit();
       }
+    });
+
+    app.on('before-quit', async () => {
+      // アプリケーション終了前のクリーンアップ
+      await this.packageParser.cleanupAll();
     });
 
     app.on('activate', () => {
@@ -35,7 +50,7 @@ class Application {
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        preload: path.join(__dirname, 'preload.js'),
+        preload: path.join(__dirname, '../../preload.js'),
         webSecurity: true,
         allowRunningInsecureContent: false
       }
@@ -61,50 +76,58 @@ class Application {
   }
 
   private setupIPC(): void {
-    // モックスキャン機能
+    // パッケージスキャン機能
     ipcMain.handle('scan-package', async (_, { filePath }) => {
-      console.log(`Mock scanning package: ${filePath}`);
+      console.log(`Scanning package: ${filePath}`);
       
-      // 模擬的なスキャン処理（実装段階では実際のロジックに置き換える）
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      return {
-        success: true,
-        data: {
+      try {
+        // 進行状況の通知設定
+        this.packageParser.setProgressCallback((progress: ScanProgress) => {
+          if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+            this.mainWindow.webContents.send('scan-progress', progress);
+          }
+        });
+
+        // パッケージ解析を実行
+        const packageInfo = await this.packageParser.parsePackage(filePath);
+
+        // パターンマッチングを実行
+        const findings = this.patternMatcher.scanFiles(packageInfo.extractedFiles);
+
+        const criticalCount = findings.filter(f => f.severity === 'critical').length;
+        const warningCount = findings.filter(f => f.severity === 'warning').length;
+        const infoCount = findings.filter(f => f.severity === 'info').length;
+
+        const result = {
           id: Date.now().toString(),
           filePath,
           scanDate: new Date().toISOString(),
-          status: 'completed',
-          findings: [
-            {
-              id: '1',
-              severity: 'warning' as const,
-              category: 'network',
-              pattern: 'UnityWebRequest',
-              filePath: 'Assets/Scripts/NetworkManager.cs',
-              lineNumber: 42,
-              context: 'var request = UnityWebRequest.Get("https://api.example.com");',
-              description: 'ネットワーク通信が検出されました'
-            },
-            {
-              id: '2', 
-              severity: 'info' as const,
-              category: 'reflection',
-              pattern: 'Assembly.Load',
-              filePath: 'Assets/Scripts/PluginLoader.cs',
-              lineNumber: 15,
-              context: 'Assembly.Load("SomeAssembly");',
-              description: 'リフレクションによる動的ロードが検出されました'
-            }
-          ],
+          status: 'completed' as const,
+          findings: findings,
           summary: {
-            critical: 0,
-            warning: 1,
-            info: 1,
-            total: 2
+            critical: criticalCount,
+            warning: warningCount,
+            info: infoCount,
+            total: findings.length
+          },
+          packageInfo
+        };
+
+        return {
+          success: true,
+          data: result
+        };
+
+      } catch (error) {
+        console.error('Package scanning failed:', error);
+        return {
+          success: false,
+          error: {
+            message: error instanceof Error ? error.message : '不明なエラーが発生しました',
+            code: 'SCAN_FAILED'
           }
-        }
-      };
+        };
+      }
     });
 
     // 設定の取得
@@ -124,6 +147,23 @@ class Application {
       console.log('Updating settings:', settings);
       // 実装段階では electron-store などを使用して永続化
       return;
+    });
+
+    // ファイルダイアログ
+    ipcMain.handle('open-file-dialog', async () => {
+      const result = await dialog.showOpenDialog(this.mainWindow!, {
+        title: 'UnityPackageファイルを選択',
+        filters: [
+          { name: 'Unity Package', extensions: ['unitypackage'] },
+          { name: 'All Files', extensions: ['*'] }
+        ],
+        properties: ['openFile']
+      });
+
+      if (!result.canceled && result.filePaths.length > 0) {
+        return result.filePaths[0];
+      }
+      return null;
     });
   }
 }

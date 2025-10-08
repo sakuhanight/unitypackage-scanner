@@ -1,33 +1,9 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { FileUploader } from './components/scan/FileUploader';
 import { ScanProgress } from './components/scan/ScanProgress';
 import { ScanResults } from './components/scan/ScanResults';
 import { DisclaimerDialog } from './components/common/DisclaimerDialog';
-
-export interface ScanResult {
-  id: string;
-  filePath: string;
-  scanDate: string;
-  status: 'completed' | 'error';
-  findings: ScanFinding[];
-  summary: {
-    critical: number;
-    warning: number;
-    info: number;
-    total: number;
-  };
-}
-
-export interface ScanFinding {
-  id: string;
-  severity: 'critical' | 'warning' | 'info';
-  category: 'network' | 'fileSystem' | 'process' | 'native' | 'reflection' | 'registry';
-  pattern: string;
-  filePath: string;
-  lineNumber: number;
-  context: string;
-  description: string;
-}
+import { ScanProgress as ScanProgressType, ScanResult } from '../shared/types';
 
 type AppState = 'idle' | 'scanning' | 'completed' | 'error';
 
@@ -38,73 +14,28 @@ export const App: React.FC = () => {
   const [progress, setProgress] = useState(0);
   const [currentFile, setCurrentFile] = useState('');
   const [showDisclaimer, setShowDisclaimer] = useState(true);
-  const [selectedFile, setSelectedFile] = useState<string | null>(null);
 
   const handleFileSelect = useCallback(async (filePath: string) => {
-    setSelectedFile(filePath);
     setAppState('scanning');
     setError(null);
     setProgress(0);
     setCurrentFile(filePath);
 
-    try {
-      // 進行状況の模擬更新
-      const progressInterval = setInterval(() => {
-        setProgress(prev => {
-          const newProgress = prev + Math.random() * 15;
-          return newProgress > 90 ? 90 : newProgress;
-        });
-        setCurrentFile(`Analyzing ${filePath}...`);
-      }, 200);
+    let unsubscribeProgress: (() => void) | null = null;
 
-      let result;
-      
-      // Electron環境かブラウザ環境かを判定
-      if (window.electronAPI && window.electronAPI.scanPackage) {
-        result = await window.electronAPI.scanPackage(filePath);
-      } else {
-        // ブラウザ環境用のモックデータ
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        result = {
-          success: true,
-          data: {
-            id: Date.now().toString(),
-            filePath,
-            scanDate: new Date().toISOString(),
-            status: 'completed' as const,
-            findings: [
-              {
-                id: '1',
-                severity: 'warning' as const,
-                category: 'network' as const,
-                pattern: 'UnityWebRequest',
-                filePath: 'Assets/Scripts/NetworkManager.cs',
-                lineNumber: 42,
-                context: 'var request = UnityWebRequest.Get("https://api.example.com");',
-                description: 'ネットワーク通信が検出されました'
-              },
-              {
-                id: '2', 
-                severity: 'info' as const,
-                category: 'reflection' as const,
-                pattern: 'Assembly.Load',
-                filePath: 'Assets/Scripts/PluginLoader.cs',
-                lineNumber: 15,
-                context: 'Assembly.Load("SomeAssembly");',
-                description: 'リフレクションによる動的ロードが検出されました'
-              }
-            ],
-            summary: {
-              critical: 0,
-              warning: 1,
-              info: 1,
-              total: 2
-            }
-          }
-        };
+    try {
+      if (!window.electronAPI || !window.electronAPI.scanPackage) {
+        throw new Error('Electron APIが利用できません。Electronアプリケーションとして実行してください。');
       }
+
+      // 進行状況の監視を設定
+      unsubscribeProgress = window.electronAPI.onScanProgress((progressData: ScanProgressType) => {
+        setProgress(progressData.progress);
+        setCurrentFile(progressData.message || progressData.currentFile || '');
+      });
+
+      const result = await window.electronAPI.scanPackage(filePath);
       
-      clearInterval(progressInterval);
       setProgress(100);
 
       if (result.success && result.data) {
@@ -116,6 +47,11 @@ export const App: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : '不明なエラーが発生しました');
       setAppState('error');
+    } finally {
+      // 進行状況の監視を解除
+      if (unsubscribeProgress) {
+        unsubscribeProgress();
+      }
     }
   }, []);
 
@@ -125,7 +61,6 @@ export const App: React.FC = () => {
     setError(null);
     setProgress(0);
     setCurrentFile('');
-    setSelectedFile(null);
   }, []);
 
   const handleDisclaimerAccept = useCallback(() => {
