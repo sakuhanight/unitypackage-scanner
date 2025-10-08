@@ -1,0 +1,29 @@
+using UnityEngine;
+using System;
+using System.Reflection;
+
+namespace TestPackage.Reflection
+{
+    /// <summary>
+    /// リフレクションを使用した動的コード実行のテスト用スクリプト
+    /// </summary>
+    public class ReflectionObfuscationScript : MonoBehaviour
+    {
+        void Start()
+        {
+            // Assembly動的ロード - Info
+            Assembly maliciousAssembly = Assembly.LoadFrom("C:\\temp\\suspicious.dll");
+            Assembly loadedAssembly = Assembly.Load("EvilLibrary, Version=1.0.0.0");
+            
+            // 型の動的取得 - Info
+            Type malwareType = Type.GetType("EvilNamespace.Backdoor, EvilAssembly");
+            
+            // オブジェクトの動的生成 - Info
+            object malwareInstance = Activator.CreateInstance(malwareType);
+            
+            // メソッドの動的実行 - Warning
+            MethodInfo executeMethod = malwareType.GetMethod("ExecutePayload");
+            executeMethod.Invoke(malwareInstance, new object[] { "victim_id_12345" });
+        }
+    }
+}

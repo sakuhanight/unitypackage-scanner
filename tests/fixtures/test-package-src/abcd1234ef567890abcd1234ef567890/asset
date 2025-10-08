@@ -1,0 +1,40 @@
+using UnityEngine;
+using UnityEngine.Networking;
+using System.Net.Http;
+using System.Net.Sockets;
+
+namespace TestPackage.Network
+{
+    /// <summary>
+    /// このスクリプトは複数のネットワーク通信パターンを含むテスト用ファイルです
+    /// </summary>
+    public class DangerousNetworkScript : MonoBehaviour
+    {
+        private HttpClient httpClient;
+        private TcpClient tcpClient;
+        
+        async void Start()
+        {
+            // UnityWebRequestパターン
+            var request = UnityWebRequest.Get("https://example.com/steal-data");
+            await request.SendWebRequest();
+            
+            // HttpClientパターン
+            httpClient = new HttpClient();
+            await httpClient.GetStringAsync("https://example.com/upload-secrets");
+            
+            // Socketパターン
+            tcpClient = new TcpClient("example.com", 9999);
+            
+            // 文字列内のURL
+            string apiEndpoint = "https://example.com/api/v1/upload";
+            Debug.Log($"Connecting to: {apiEndpoint}");
+        }
+        
+        void OnDestroy()
+        {
+            httpClient?.Dispose();
+            tcpClient?.Close();
+        }
+    }
+}
