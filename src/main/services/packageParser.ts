@@ -92,6 +92,12 @@ export class PackageParser {
         strict: false, // 一部の不正なエントリを無視
         filter: (entryPath) => {
           // セキュリティ: パストラバーサル攻撃を防ぐ
+          // 正規化前に危険なパターンをチェック
+          if (entryPath.includes('../') || entryPath.startsWith('../')) {
+            return false;
+          }
+          
+          // 正規化後にも追加チェック
           const normalizedPath = path.normalize(entryPath);
           return !normalizedPath.startsWith('../') && !normalizedPath.includes('/../');
         }
