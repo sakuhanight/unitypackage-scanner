@@ -73,7 +73,7 @@
     "vitest": "^1.1.0"
   },
   "dependencies": {
-    "electron-store": "^8.1.0",
+    "electron-store": "^11.0.2",
     "fs-extra": "^11.3.2",
     "graceful-fs": "^4.2.11",
     "jsonfile": "^6.1.0",
