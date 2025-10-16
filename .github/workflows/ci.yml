@@ -14,7 +14,7 @@ jobs:
         # v0.9.0: Windows専用ビルド
         # v1.0.0以降で macOS, Linux対応予定
         os: [windows-latest]
-        node-version: [18.x, 20.x]
+        node-version: [20.x]
     
     steps:
       - name: Checkout
