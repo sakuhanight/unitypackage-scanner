@@ -55,7 +55,7 @@
     "@typescript-eslint/parser": "^6.15.0",
     "@vitejs/plugin-react": "^5.0.4",
     "autoprefixer": "^10.4.16",
-    "concurrently": "^8.2.2",
+    "concurrently": "^9.2.1",
     "electron": "^38.2.2",
     "electron-builder": "^26.0.12",
     "eslint": "^8.56.0",
