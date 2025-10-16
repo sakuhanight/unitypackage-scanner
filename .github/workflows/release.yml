@@ -46,11 +46,32 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
+      - name: Create release archive
+        shell: pwsh
+        run: |
+          $version = "0.9.0"
+          $zipName = "unitypackage-scanner-$version-windows.zip"
+
+          # Create temp directory for archive contents
+          New-Item -ItemType Directory -Force -Path "release-archive"
+
+          # Copy files
+          Copy-Item "release/unitypackage-scanner-$version.exe" "release-archive/"
+          Copy-Item "LICENSE" "release-archive/"
+          Copy-Item "README.md" "release-archive/"
+
+          # Create zip
+          Compress-Archive -Path "release-archive/*" -DestinationPath "release/$zipName"
+
+          # Cleanup
+          Remove-Item -Recurse -Force "release-archive"
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            release/*.exe
+            release/unitypackage-scanner-*.exe
+            release/unitypackage-scanner-*.zip
             release/*.blockmap
           body: |
             ## ゆにぱけスキャナー ${{ github.ref_name }}
@@ -61,8 +82,15 @@ jobs:
             macOS・Linux版は将来のバージョン（v1.0.0以降）で対応予定です。
 
             ### インストール方法
-            1. `ゆにぱけスキャナー Setup *.exe` をダウンロード
+
+            **インストーラー版（推奨）**
+            1. `unitypackage-scanner-0.9.0.exe` をダウンロード
             2. ダウンロードしたファイルを実行してインストール
+
+            **ポータブル版（Zip）**
+            1. `unitypackage-scanner-0.9.0-windows.zip` をダウンロード
+            2. 解凍して任意のフォルダに配置
+            3. `unitypackage-scanner-0.9.0.exe` を実行
 
             ### 主な変更点
             自動生成されたリリースノートを参照してください。

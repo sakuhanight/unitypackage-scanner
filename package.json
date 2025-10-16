@@ -92,6 +92,7 @@
   "build": {
     "appId": "net.tsuitachi.unitypackage-scanner",
     "productName": "ゆにぱけスキャナー",
+    "artifactName": "${name}-${version}.${ext}",
     "asar": false,
     "directories": {
       "output": "release"
