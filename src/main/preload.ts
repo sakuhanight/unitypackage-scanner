@@ -26,14 +26,6 @@ export interface ScanFinding {
   description: string;
 }
 
-export interface AppSettings {
-  theme: 'light' | 'dark';
-  language: 'ja' | 'en';
-  patternPreset: 'strict' | 'standard' | 'relaxed';
-  customPatterns: any[];
-  excludePaths: string[];
-  maxFileSize: number;
-}
 
 export interface Result<T> {
   success: boolean;
@@ -47,12 +39,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   scanPackage: (filePath: string, options?: any): Promise<Result<ScanResult>> =>
     ipcRenderer.invoke('scan-package', { filePath, options }),
 
-  // 設定管理
-  getSettings: (): Promise<AppSettings> =>
-    ipcRenderer.invoke('get-settings'),
-
-  updateSettings: (settings: Partial<AppSettings>): Promise<void> =>
-    ipcRenderer.invoke('update-settings', settings),
 
   // バージョン情報
   getVersion: (): Promise<string> =>
@@ -60,7 +46,33 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // ファイルダイアログ
   openFileDialog: (): Promise<string | null> =>
-    ipcRenderer.invoke('open-file-dialog')
+    ipcRenderer.invoke('open-file-dialog'),
+
+  // ファイルデータ送信（ドラッグ&ドロップ用）
+  processDroppedFile: async (file: File): Promise<string | null> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    return ipcRenderer.invoke('process-dropped-file', {
+      name: file.name,
+      data: buffer
+    });
+  },
+
+
+  // 進行状況の監視
+  onScanProgress: (callback: (progress: any) => void) => {
+    const subscription = (_: any, progress: any) => callback(progress);
+    ipcRenderer.on('scan-progress', subscription);
+    
+    // サブスクリプション解除用の関数を返す
+    return () => ipcRenderer.off('scan-progress', subscription);
+  },
+
+  // ファイルドロップイベントの監視
+  onFileDropped: (callback: (filePath: string) => void) => {
+    return ipcRenderer.on('file-dropped', (_, filePath) => callback(filePath));
+  },
+
 });
 
 // グローバル型定義
@@ -68,10 +80,11 @@ declare global {
   interface Window {
     electronAPI: {
       scanPackage: (filePath: string, options?: any) => Promise<Result<ScanResult>>;
-      getSettings: () => Promise<AppSettings>;
-      updateSettings: (settings: Partial<AppSettings>) => Promise<void>;
       getVersion: () => Promise<string>;
       openFileDialog: () => Promise<string | null>;
+      processDroppedFile: (file: File) => Promise<string | null>;
+      onScanProgress: (callback: (progress: any) => void) => () => void;
+      onFileDropped: (callback: (filePath: string) => void) => any;
     };
   }
 }

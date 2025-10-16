@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 
 interface FileUploaderProps {
   onFileSelect: (filePath: string) => void;
@@ -6,32 +6,6 @@ interface FileUploaderProps {
 
 export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
   const [isDragOver, setIsDragOver] = useState(false);
-
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    
-    const files = Array.from(e.dataTransfer.files);
-    const unityPackageFile = files.find(file => 
-      file.name.toLowerCase().endsWith('.unitypackage')
-    );
-    
-    if (unityPackageFile) {
-      // Electronでは、ファイルオブジェクトからパスを取得
-      const filePath = (unityPackageFile as any).path || unityPackageFile.name;
-      onFileSelect(filePath);
-    }
-  }, [onFileSelect]);
 
 
   const handleButtonClick = useCallback(async () => {
@@ -47,6 +21,43 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
       }
     }
   }, [onFileSelect]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const unityPackageFile = files.find(file => 
+      file.name.toLowerCase().endsWith('.unitypackage')
+    );
+    
+    if (unityPackageFile && window.electronAPI?.processDroppedFile) {
+      try {
+        const tempFilePath = await window.electronAPI.processDroppedFile(unityPackageFile);
+        if (tempFilePath) {
+          onFileSelect(tempFilePath);
+        } else {
+          console.error('Failed to process dropped file');
+          // フォールバック: ファイルダイアログを開く
+          handleButtonClick();
+        }
+      } catch (error) {
+        console.error('Error processing dropped file:', error);
+        // フォールバック: ファイルダイアログを開く
+        handleButtonClick();
+      }
+    }
+  }, [onFileSelect, handleButtonClick]);
 
   return (
     <div className="fade-in">
@@ -109,7 +120,8 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
         <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
           <li>• ファイル形式: .unitypackage</li>
           <li>• 最大ファイルサイズ: 100MB</li>
-          <li>• Unity 5.x 以降のパッケージに対応</li>
+          <li>• Unity 2022.3.22f1 対応</li>
+          <li>• 各種Unityアセット・パッケージファイル</li>
         </ul>
       </div>
     </div>

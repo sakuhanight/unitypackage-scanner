@@ -1,6 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
 import { ScanFinding } from '../../../shared/types';
+import { PatternConstants } from '../../constants';
 
 export interface PatternDefinition {
   name: string;
@@ -44,7 +45,6 @@ export interface CompiledPattern {
  * パターンファイルの読み込みと管理を行うクラス
  */
 export class PatternLoader {
-  private static readonly DEFAULT_PATTERN_PATH = path.join(__dirname, '../../resources/patterns/default-patterns.json');
   private loadedPatterns: CompiledPattern[] = [];
   private currentPatternFile: PatternFile | null = null;
 
@@ -52,7 +52,7 @@ export class PatternLoader {
    * デフォルトパターンを読み込む
    */
   async loadDefaultPatterns(): Promise<CompiledPattern[]> {
-    return this.loadPatternsFromFile(PatternLoader.DEFAULT_PATTERN_PATH);
+    return this.loadPatternsFromFile(PatternConstants.getDefaultPatternPath());
   }
 
   /**
@@ -60,7 +60,13 @@ export class PatternLoader {
    */
   async loadPatternsFromFile(filePath: string): Promise<CompiledPattern[]> {
     try {
-      const fileContent = await fs.readFile(filePath, 'utf-8');
+      // ファイル名のみの場合は、resourcesディレクトリ内から探す
+      let resolvedPath = filePath;
+      if (!path.isAbsolute(filePath) && !filePath.includes('/') && !filePath.includes('\\')) {
+        resolvedPath = PatternConstants.getPatternFilePath(filePath);
+      }
+      
+      const fileContent = await fs.readFile(resolvedPath, 'utf-8');
       const patternFile: PatternFile = JSON.parse(fileContent);
       
       this.currentPatternFile = patternFile;
@@ -212,7 +218,7 @@ export class PatternLoader {
    * 利用可能なパターンファイルを検索
    */
   static async findAvailablePatternFiles(baseDir?: string): Promise<string[]> {
-    const searchDir = baseDir || path.join(__dirname, '../../resources/patterns');
+    const searchDir = baseDir || PatternConstants.getPatternsPath();
     
     try {
       const files = await fs.readdir(searchDir);

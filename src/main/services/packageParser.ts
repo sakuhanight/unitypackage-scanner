@@ -1,8 +1,8 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import * as os from 'os';
 import * as tar from 'tar';
-import { PackageInfo, ExtractedFile, ScanProgress } from '../../shared/types';
+import { PackageInfo, ExtractedFile, ScanProgress } from '@/shared/types';
+import { PathConstants, ScanConstants, FileConstants } from '../constants';
 
 /**
  * UnityPackage (.unitypackage) ファイルの解析を行うサービス
@@ -12,7 +12,7 @@ export class PackageParser {
   private progressCallback?: (progress: ScanProgress) => void;
 
   constructor(tempDir?: string) {
-    this.tempDir = tempDir || path.join(os.tmpdir(), 'unitypackage-scanner');
+    this.tempDir = tempDir || PathConstants.getTempPath();
   }
 
   /**
@@ -124,7 +124,7 @@ export class PackageParser {
         if (!stats.isDirectory()) continue;
         
         // GUID形式かチェック（32文字の16進数）
-        if (!/^[a-fA-F0-9]{32}$/.test(guidDir)) continue;
+        if (!FileConstants.GUID_PATTERN.test(guidDir)) continue;
         
         // GUIDディレクトリ内のファイルをチェック
         const assetPath = path.join(guidPath, 'asset');
@@ -153,7 +153,7 @@ export class PackageParser {
           if (ext === '.cs') {
             type = 'script';
             // C#ファイルの内容を読み込み（サイズ制限あり）
-            if (assetStats.size < 1024 * 1024) { // 1MB未満のファイルのみ
+            if (assetStats.size < ScanConstants.SCRIPT_MAX_SIZE) {
               try {
                 assetContent = await fs.readFile(assetPath, 'utf-8');
               } catch {
@@ -216,7 +216,7 @@ export class PackageParser {
    */
   private async createTempDirectory(): Promise<string> {
     const uniqueId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-    const tempPath = path.join(this.tempDir, `unitypackage-${uniqueId}`);
+    const tempPath = path.join(this.tempDir, `${ScanConstants.TEMP_DIR_PREFIX}${uniqueId}`);
     
     await fs.ensureDir(tempPath);
     return tempPath;

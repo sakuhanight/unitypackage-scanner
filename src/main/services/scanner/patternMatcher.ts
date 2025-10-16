@@ -1,4 +1,4 @@
-import { ScanFinding, ExtractedFile } from '../../../shared/types';
+import { ScanFinding, ExtractedFile } from '@/shared/types';
 import { PatternLoader, CompiledPattern } from './patternLoader';
 import { ExtensionDetector } from './extensionDetector';
 

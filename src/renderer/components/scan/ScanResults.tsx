@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScanResult, ScanFinding, ExtractedFile } from '../../../shared/types';
+import { ScanResult, ScanFinding, ExtractedFile } from '@/shared/types';
 
 interface ScanResultsProps {
   result: ScanResult;
@@ -104,6 +104,7 @@ export const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => 
     return acc;
   }, {} as Record<string, ExtractedFile[]>) || {};
 
+
   return (
     <div className="fade-in space-y-6">
       {/* 概要カード */}
@@ -185,9 +186,6 @@ export const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => 
             className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors focus-ring"
           >
             {showDetails ? '詳細を隠す' : '詳細を表示'}
-          </button>
-          <button className="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 px-6 py-2 rounded-lg font-medium transition-colors focus-ring">
-            レポートをエクスポート
           </button>
         </div>
       </div>
@@ -408,14 +406,17 @@ export const ScanResults: React.FC<ScanResultsProps> = ({ result, onReset }) => 
 
 
       {/* アクション */}
-      <div className="text-center">
-        <button
-          onClick={onReset}
-          className="text-blue-600 hover:text-blue-700 font-medium"
-        >
-          新しいファイルをスキャン
-        </button>
+      <div className="text-center space-y-4">
+        <div className="flex justify-center space-x-4">
+          <button
+            onClick={onReset}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            新しいファイルをスキャン
+          </button>
+        </div>
       </div>
+
     </div>
   );
 };

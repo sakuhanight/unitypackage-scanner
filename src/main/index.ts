@@ -3,6 +3,7 @@ import * as path from 'path';
 import { PackageParser } from './services/packageParser';
 import { PatternMatcher } from './services/scanner/patternMatcher';
 import { ScanProgress } from '../shared/types';
+import { AppConstants, FileConstants, DevConstants } from './constants';
 
 class Application {
   private mainWindow: BrowserWindow | null = null;
@@ -40,14 +41,22 @@ class Application {
         this.createWindow();
       }
     });
+
+    // ファイルを開く（macOS対応）
+    app.on('open-file', (event, filePath) => {
+      event.preventDefault();
+      if (filePath.endsWith('.unitypackage') && this.mainWindow) {
+        this.mainWindow.webContents.send('file-dropped', filePath);
+      }
+    });
   }
 
   private createWindow(): void {
     this.mainWindow = new BrowserWindow({
-      width: 1200,
-      height: 800,
-      minWidth: 800,
-      minHeight: 600,
+      width: AppConstants.WINDOW_WIDTH,
+      height: AppConstants.WINDOW_HEIGHT,
+      minWidth: AppConstants.MIN_WINDOW_WIDTH,
+      minHeight: AppConstants.MIN_WINDOW_HEIGHT,
       show: false,
       titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
       webPreferences: {
@@ -62,7 +71,7 @@ class Application {
     // 開発環境での設定
     const isDev = !app.isPackaged;
     if (isDev) {
-      this.mainWindow.loadURL('http://localhost:5173');
+      this.mainWindow.loadURL(DevConstants.DEV_SERVER_URL);
       this.mainWindow.webContents.openDevTools();
     } else {
       this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
@@ -75,6 +84,21 @@ class Application {
 
     this.mainWindow.on('closed', () => {
       this.mainWindow = null;
+    });
+
+    // ファイルドロップハンドラーを設定
+    this.mainWindow.webContents.on('will-navigate', (event, navigationUrl) => {
+      const parsedUrl = new URL(navigationUrl);
+      
+      if (parsedUrl.protocol === 'file:') {
+        event.preventDefault();
+        // ファイルパスを抽出
+        const filePath = decodeURIComponent(parsedUrl.pathname);
+        if (filePath.endsWith('.unitypackage')) {
+          // レンダラープロセスにファイルパスを送信
+          this.mainWindow?.webContents.send('file-dropped', filePath);
+        }
+      }
     });
   }
 
@@ -133,67 +157,12 @@ class Application {
       }
     });
 
-    // 設定の取得
-    ipcMain.handle('get-settings', async () => {
-      // TODO: electron-storeなどで永続化された設定を読み込み
-      return {
-        theme: 'light',
-        language: 'ja',
-        patternFile: 'default-patterns.json',
-        patternPreset: 'standard',
-        customPatterns: [],
-        excludePaths: [],
-        maxFileSize: 10485760, // 10MB
-        showDisclaimerOnStartup: true
-      };
-    });
-
-    // 設定の更新
-    ipcMain.handle('update-settings', async (_, settings) => {
-      console.log('Updating settings:', settings);
-      
-      // パターンファイルまたはプリセットが変更された場合、パターンマッチャーを更新
-      if (settings.patternFile || settings.patternPreset) {
-        try {
-          await this.patternMatcher.loadPatterns(settings.patternFile, settings.patternPreset);
-        } catch (error) {
-          console.error('Failed to load patterns:', error);
-        }
-      }
-      
-      // TODO: electron-storeなどで設定を永続化
-      return;
-    });
-
-    // 利用可能なパターンファイル一覧を取得
-    ipcMain.handle('get-available-pattern-files', async () => {
-      try {
-        const { PatternLoader } = await import('./services/scanner/patternLoader');
-        return await PatternLoader.findAvailablePatternFiles();
-      } catch (error) {
-        console.error('Failed to get pattern files:', error);
-        return [];
-      }
-    });
-
-    // パターンファイル情報を取得
-    ipcMain.handle('get-pattern-info', async () => {
-      return this.patternMatcher.getPatternInfo();
-    });
-
-    // 利用可能なプリセット一覧を取得
-    ipcMain.handle('get-available-presets', async () => {
-      return this.patternMatcher.getAvailablePresets();
-    });
 
     // ファイルダイアログ
     ipcMain.handle('open-file-dialog', async () => {
       const result = await dialog.showOpenDialog(this.mainWindow!, {
         title: 'UnityPackageファイルを選択',
-        filters: [
-          { name: 'Unity Package', extensions: ['unitypackage'] },
-          { name: 'All Files', extensions: ['*'] }
-        ],
+        filters: FileConstants.FILE_FILTERS,
         properties: ['openFile']
       });
 
@@ -202,6 +171,31 @@ class Application {
       }
       return null;
     });
+
+    // バージョン情報
+    ipcMain.handle('get-version', async () => {
+      return app.getVersion();
+    });
+
+    // ドロップされたファイルの処理
+    ipcMain.handle('process-dropped-file', async (_, { name, data }) => {
+      try {
+        const fs = await import('fs-extra');
+        const tempPath = path.join(require('os').tmpdir(), 'unitypackage-scanner-drop', name);
+        
+        // 一時ディレクトリを作成
+        await fs.ensureDir(path.dirname(tempPath));
+        
+        // ファイルを一時的に保存
+        await fs.writeFile(tempPath, data);
+        
+        return tempPath;
+      } catch (error) {
+        console.error('Failed to process dropped file:', error);
+        return null;
+      }
+    });
+
   }
 }
 

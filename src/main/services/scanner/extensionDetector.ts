@@ -1,6 +1,7 @@
 import * as fs from 'fs-extra';
 import * as path from 'path';
-import { ScanFinding, ExtractedFile } from '../../../shared/types';
+import { ScanFinding, ExtractedFile } from '@/shared/types';
+import { ExtensionConstants } from '../../constants';
 
 export interface ExtensionRule {
   severity: ScanFinding['severity'];
@@ -47,7 +48,6 @@ export interface ExtensionFinding extends ScanFinding {
  * ファイル拡張子に基づく検出エンジン
  */
 export class ExtensionDetector {
-  private static readonly DEFAULT_EXTENSION_PATH = path.join(__dirname, '../../resources/patterns/file-extensions.json');
   private extensionRules: Record<string, ExtensionRule> = {};
   private categories: Record<string, ExtensionCategory> = {};
   private currentDefinitionFile: ExtensionDefinitionFile | null = null;
@@ -57,7 +57,7 @@ export class ExtensionDetector {
    * デフォルト拡張子定義を読み込む
    */
   async initialize(): Promise<void> {
-    await this.loadExtensionDefinitions(ExtensionDetector.DEFAULT_EXTENSION_PATH);
+    await this.loadExtensionDefinitions(ExtensionConstants.getDefaultExtensionPath());
   }
 
   /**

@@ -249,3 +249,5 @@ local.properties
 
 # PDT-specific
 .buildpath
+
+CLAUDE.md
