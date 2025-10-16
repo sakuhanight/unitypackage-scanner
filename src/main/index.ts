@@ -73,7 +73,8 @@ class Application {
     const isDev = !app.isPackaged;
     if (isDev) {
       this.mainWindow.loadURL(DevConstants.DEV_SERVER_URL);
-      this.mainWindow.webContents.openDevTools();
+      // 本番リリースではDevToolsを無効化
+      // this.mainWindow.webContents.openDevTools();
     } else {
       this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
     }
@@ -106,7 +107,6 @@ class Application {
   private setupIPC(): void {
     // パッケージスキャン機能
     ipcMain.handle('scan-package', async (_, { filePath }) => {
-      console.log(`Scanning package: ${filePath}`);
       
       try {
         // 進行状況の通知設定

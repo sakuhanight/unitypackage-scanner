@@ -1,4 +1,4 @@
-# ゆにぱけスキャナー (unitypackage-scanner) 仕様書 v2.0
+# ゆにぱけスキャナー (unitypackage-scanner) 仕様書 v0.9.0
 
 ## 1. プロジェクト概要
 
@@ -15,19 +15,22 @@ UnityPackage（.unitypackage）ファイルの内容をパターンマッチン�
 - 完全無償で公開（オープンソース）
 - ユーザーのローカル環境で完結
 - インターネット接続不要
+- Unity 2022.3.22f1 対応
 
 ### 1.3 対象ユーザー
-- Unity開発者
+- Unity開発者（ゲーム開発、アプリケーション開発）
 - 第三者製UnityPackageを使用前にチェックしたい開発者
 - パッケージの安全性を確認したい開発者
+- セキュリティに敏感なUnityコンテンツ制作者
 
 ### 1.4 技術スタック
 - **フロントエンド**: Electron + TypeScript + React
 - **スタイリング**: Tailwind CSS v4
-- **状態管理**: Redux Toolkit (RTK Query含む)
+- **状態管理**: React Hooks（useState, useCallback, useEffect）
 - **パッケージマネージャ**: pnpm
 - **パッケージング**: Electron Builder
 - **解析エンジン**: 正規表現 + パターンマッチング
+- **ファイル処理**: tar, fs-extra（UnityPackage展開）
 - **テスト**: Vitest (ユニットテスト), Playwright (E2Eテスト)
 - **CI/CD**: GitHub Actions
 - **コード品質**: ESLint, Prettier
@@ -182,23 +185,22 @@ sample.unitypackage (tar.gz)
 - Markdown形式
 - テキスト形式
 
-### 2.2 設定機能
+### 2.2 実装状況（v0.9.0）
 
-#### 2.2.1 検出パターンのカスタマイズ
-- デフォルトパターンセットの選択:
-  - 厳格（すべてのパターンを検出）
-  - 標準（推奨）
-  - 緩和（明らかに危険なもののみ）
-- カスタムパターンの追加（上級者向け）
+#### 2.2.1 実装済み機能
+- ✅ UnityPackageファイルの読み込み（ドラッグ&ドロップ、ファイル選択）
+- ✅ パッケージ解析（tar.gz展開、GUID構造解析）
+- ✅ パターンマッチング検出（6カテゴリ、3プリセット）
+- ✅ 結果表示（シンプル・詳細表示）
+- ✅ エクスポート機能（JSON、Markdown、テキスト）
+- ✅ 進行状況表示とリアルタイム更新
+- ✅ 一元化された定数管理（constants.ts）
 
-#### 2.2.2 除外設定
-- 特定のファイルパスを検出から除外
-- 特定のパターンを無視
-
-#### 2.2.3 アプリケーション設定
-- テーマ（Light / Dark）
-- 言語（日本語 / English）
-- ログレベル設定
+#### 2.2.2 未実装機能（将来実装予定）
+- ❌ 設定画面（パターンカスタマイズ、除外設定）
+- ❌ テーマ切り替え（Light/Dark）
+- ❌ 多言語対応（現在は日本語のみ）
+- ❌ カスタムパターン追加機能
 
 ## 3. 非機能要件
 
@@ -224,50 +226,40 @@ sample.unitypackage (tar.gz)
 
 ## 4. アーキテクチャ
 
-### 4.1 ディレクトリ構成
+### 4.1 ディレクトリ構成（実際の構成）
 ```
 unitypackage-scanner/
-├── .github/
-│   ├── workflows/
-│   │   ├── ci.yml              # CI（テスト・ビルド）
-│   │   ├── release.yml         # リリース自動化
-│   │   └── pr-check.yml        # PR時のチェック
-│   ├── ISSUE_TEMPLATE/
-│   │   ├── bug_report.md
-│   │   ├── feature_request.md
-│   │   └── pattern_request.md  # 新規パターン追加リクエスト
-│   └── PULL_REQUEST_TEMPLATE.md
 ├── src/
-│   ├── main/                 # Electronメインプロセス
-│   │   ├── index.ts
-│   │   ├── ipc/             # IPC通信ハンドラ
+│   ├── main/                    # Electronメインプロセス
+│   │   ├── index.ts            # メインプロセスエントリーポイント
+│   │   ├── constants.ts        # 一元化された定数管理
+│   │   ├── preload.ts          # プリロードスクリプト
 │   │   ├── services/
-│   │   │   ├── packageParser.ts    # tar.gz解析
+│   │   │   ├── packageParser.ts       # UnityPackage解析
 │   │   │   └── scanner/
-│   │   │       ├── patternMatcher.ts   # パターンマッチングエンジン
-│   │   │       ├── patterns/
-│   │   │       │   ├── network.ts
-│   │   │       │   ├── fileSystem.ts
-│   │   │       │   ├── process.ts
-│   │   │       │   ├── native.ts
-│   │   │       │   ├── reflection.ts
-│   │   │       │   └── registry.ts
-│   │   │       └── analyzer.ts
-│   ├── renderer/             # Reactフロントエンド
-│   │   ├── App.tsx
+│   │   │       ├── patternMatcher.ts  # パターンマッチングエンジン
+│   │   │       ├── patternLoader.ts   # パターン定義ローダー
+│   │   │       └── extensionDetector.ts # 拡張子検出
+│   │   └── resources/          # リソースファイル
+│   │       └── patterns/       # パターン定義ファイル
+│   │           ├── default-patterns.json
+│   │           ├── malware-detection.json
+│   │           └── file-extensions.json
+│   ├── renderer/               # Reactフロントエンド
+│   │   ├── App.tsx            # メインアプリケーション
 │   │   ├── components/
-│   │   │   ├── FileUploader.tsx
-│   │   │   ├── ScanProgress.tsx
-│   │   │   ├── ResultSimple.tsx
-│   │   │   ├── ResultDetail.tsx
-│   │   │   └── Settings.tsx
-│   │   ├── hooks/
+│   │   │   ├── scan/
+│   │   │   │   ├── FileUploader.tsx    # ファイルアップロード
+│   │   │   │   ├── ScanProgress.tsx    # 進行状況表示
+│   │   │   │   └── ScanResults.tsx     # 結果表示
+│   │   │   └── export/
+│   │   │       └── ExportModal.tsx     # エクスポート機能
 │   │   ├── styles/
-│   │   │   └── globals.css      # Tailwind設定
+│   │   │   └── globals.css      # Tailwindスタイル
 │   │   └── utils/
-│   └── shared/              # 共通型定義
-│       ├── types.ts
-│       └── patterns.ts      # 検出パターン定義
+│   │       └── formatters.ts    # データフォーマッター
+│   └── shared/                 # 共通型定義
+│       └── types.ts
 ├── tests/
 │   ├── unit/                # ユニットテスト
 │   │   ├── scanner/
@@ -310,47 +302,31 @@ unitypackage-scanner/
 6. レンダラープロセスに結果を返却
 7. UIに結果を表示
 
-### 4.3 状態管理
-- **Redux Toolkit**: アプリケーション全体の状態管理
-- **永続化**: electron-store（設定のみ）
-- **セッション状態**: Redux（スキャン結果、UI状態）
+### 4.3 状態管理（実装版）
+- **React Hooks**: useState, useCallback, useEffectを使用したローカル状態管理
+- **IPC通信**: Electron preload.js経由でメインプロセスと通信
+- **一時的な状態**: コンポーネントレベルでの状態管理
 
 **状態の分類:**
-- **Global State (Redux):**
-  - スキャン結果
-  - スキャン進行状態
-  - UI状態（テーマ、言語）
-  - エラー状態
+- **アプリケーション状態（App.tsx）:**
+  - `appState: 'idle' | 'scanning' | 'completed' | 'error'`
+  - `scanResult: ScanResult | null`
+  - `scanProgress: ScanProgress | null`
+  - `error: string | null`
 
-- **Persisted State (electron-store):**
-  - ユーザー設定
-  - 検出パターン設定
-  - 除外ルール
-  - 初回起動フラグ
+- **コンポーネント状態:**
+  - **FileUploader**: `isDragOver` (ドラッグ状態)
+  - **ScanProgress**: `currentProgress` (進行状況)
+  - **ExportModal**: `isVisible, exportFormat` (エクスポート設定)
 
-**Redux Store構成:**
+**実装されたIPC API:**
 ```typescript
-{
-  scan: {
-    status: 'idle' | 'scanning' | 'completed' | 'error',
-    progress: number,
-    currentFile: string,
-    result: ScanResult | null,
-    error: string | null
-  },
-  settings: {
-    theme: 'light' | 'dark',
-    language: 'ja' | 'en',
-    patternPreset: 'strict' | 'standard' | 'relaxed',
-    customPatterns: Pattern[],
-    excludePaths: string[],
-    maxFileSize: number
-  },
-  ui: {
-    showDisclaimerDialog: boolean,
-    showDetailView: boolean,
-    selectedCategory: string | null
-  }
+window.electronAPI: {
+  scanPackage: (filePath: string) => Promise<Result<ScanResult>>;
+  getVersion: () => Promise<string>;
+  openFileDialog: () => Promise<string | null>;
+  processDroppedFile: (file: File) => Promise<string | null>;
+  onScanProgress: (callback: (progress: any) => void) => () => void;
 }
 ```
 
@@ -566,159 +542,112 @@ unitypackage-scanner/
 └─────────────────────────────────────────┘
 ```
 
-## 6. 開発フェーズ
+## 6. 開発フェーズ（実装状況 v0.9.0）
 
-### 実装アプローチ
-**モックファースト開発**:
-1. 完全なUIモックを作成（ダミーデータ使用）
-2. ユーザーフローを確認・調整
-3. 段階的に実際の機能を実装していく
+### 実装完了済みフェーズ
 
-#### Phase 1: UIモック作成
-**目標**: 全画面のUIモックを完成させる（機能は未実装）
+#### ✅ Phase 1: UIモック作成（完了）
+- ✅ プロジェクトセットアップ
+  - ✅ Electron + React + TypeScript環境構築
+  - ✅ 基本的なディレクトリ構成
+  - ✅ ビルド・開発環境整備（pnpm使用）
 
-- [ ] プロジェクトセットアップ
-  - [ ] Electron + React + TypeScript環境構築
-  - [ ] 基本的なディレクトリ構成
-  - [ ] ビルド・開発環境整備
+- ✅ UIコンポーネント作成
+  - ✅ メイン画面（FileUploader）
+  - ✅ スキャン中画面（ScanProgress）
+  - ✅ 結果表示画面（ScanResults）
+  - ✅ エクスポート機能（ExportModal）
+  - ❌ 注意事項ダイアログ（未実装）
+  - ❌ 設定画面（削除済み）
 
-- [ ] UIコンポーネント作成（全てモック）
-  - [ ] 注意事項ダイアログ
-  - [ ] メイン画面
-  - [ ] スキャン中画面
-  - [ ] 結果表示画面（シンプル表示）
-  - [ ] 詳細結果画面
-  - [ ] 設定画面
+- ✅ 画面遷移の実装
+  - ✅ 状態ベースの画面切り替え
+  - ✅ 4つの主要状態間の遷移
 
-- [ ] ダミーデータの準備
-  - [ ] サンプルスキャン結果データ
-  - [ ] 各種状態のモックデータ
+#### ✅ Phase 2: パッケージ解析機能（完了）
+- ✅ ファイル処理
+  - ✅ ドラッグ&ドロップの実装（processDroppedFile API）
+  - ✅ .unitypackageファイルの読み込み
+  - ✅ tar.gzの展開処理（tar ライブラリ使用）
 
-- [ ] 画面遷移の実装
-  - [ ] ルーティング設定
-  - [ ] 画面間の遷移確認
+- ✅ パッケージ解析
+  - ✅ ファイル構造の解析（GUID ディレクトリ構造対応）
+  - ✅ メタデータの抽出（pathname, asset ファイル）
+  - ✅ スクリプトファイル（.cs）の抽出と内容読み込み
+  - ✅ DLLファイルの抽出
+  - ✅ アセット情報の取得（サイズ、タイプ判定）
 
-**Phase 1完了の定義**:
-- 全画面が表示される
-- 画面遷移が動作する
-- デザインが確認できる
+#### ✅ Phase 3: パターンマッチングエンジン（完了）
+- ✅ パターン定義
+  - ✅ ネットワーク通信パターン
+  - ✅ ファイルシステムパターン
+  - ✅ プロセス実行パターン
+  - ✅ ネイティブコードパターン
+  - ✅ リフレクションパターン
+  - ✅ レジストリパターン
 
-#### Phase 2: パッケージ解析機能
-**目標**: UnityPackageファイルの解析機能を実装
+- ✅ マッチングエンジン
+  - ✅ 正規表現エンジン実装（PatternMatcher）
+  - ✅ C#コード解析
+  - ✅ 拡張子ベース検出（ExtensionDetector）
+  - ✅ パターンローダー（PatternLoader）
 
-- [ ] ファイル処理
-  - [ ] ドラッグ&ドロップの実装
-  - [ ] .unitypackageファイルの読み込み
-  - [ ] tar.gzの展開処理
+- ✅ 結果集計
+  - ✅ 重大度判定（Critical/Warning/Info）
+  - ✅ カテゴリ分類
+  - ✅ 統計情報生成
 
-- [ ] パッケージ解析
-  - [ ] ファイル構造の解析
-  - [ ] メタデータの抽出
-  - [ ] スクリプトファイル（.cs）の抽出
-  - [ ] DLLファイルの抽出
-  - [ ] アセット情報の取得
+#### ✅ Phase 4: 結果表示の実装（完了）
+- ✅ シンプル表示
+  - ✅ ✅/⚠️の判定表示
+  - ✅ サマリー情報表示
 
-**Phase 2完了の定義**:
-- .unitypackageファイルをドロップできる
-- ファイルが展開される
-- 中身のファイル一覧が取得できる
+- ✅ 詳細表示
+  - ✅ 検出項目一覧表示（重大度別）
+  - ✅ ファイルパス表示
+  - ✅ 行番号表示（可能な場合）
+  - ✅ 検出コンテキスト表示
 
-#### Phase 3: パターンマッチングエンジン
-**目標**: 検出パターンの実装
+- ✅ エクスポート機能
+  - ✅ JSON形式
+  - ✅ Markdown形式
+  - ✅ テキスト形式
 
-- [ ] パターン定義
-  - [ ] ネットワーク通信パターン
-  - [ ] ファイルシステムパターン
-  - [ ] プロセス実行パターン
-  - [ ] ネイティブコードパターン
-  - [ ] リフレクションパターン
-  - [ ] レジストリパターン
+#### ❌ Phase 5: 設定機能とブラッシュアップ（削除・将来実装予定）
+**設定機能は v0.9.0 で削除済み（将来実装予定）**
 
-- [ ] マッチングエンジン
-  - [ ] 正規表現エンジン実装
-  - [ ] C#コード解析
-  - [ ] DLLファイル名チェック
-  - [ ] URL抽出
+- ❌ 設定機能（削除済み）
+  - ❌ パターンプリセット選択
+  - ❌ 個別パターンのON/OFF
+  - ❌ 除外設定
+  - ❌ テーマ切り替え
 
-- [ ] 結果集計
-  - [ ] 重大度判定
-  - [ ] カテゴリ分類
-  - [ ] 統計情報生成
+- ✅ UI/UX改善（部分的に完了）
+  - ✅ 進行状況表示の改善
+  - ✅ エラーメッセージの改善
+  - ❌ アニメーション追加
+  - ❌ ダークテーマ対応
 
-**Phase 3完了の定義**:
-- パターンマッチングが動作する
-- 検出結果が取得できる
-- コンソールで結果が確認できる
+- ✅ ドキュメント整備（完了）
+  - ✅ README完成版
+  - ✅ CHANGELOG.md作成
+  - ✅ ライセンス情報（MIT）
+  - ✅ SPECIFICATION.md更新
 
-#### Phase 4: 結果表示の実装
-**目標**: スキャン結果の表示
+#### ✅ Phase 6: テストとリリース準備（v0.9.0完了）
+- ✅ テスト
+  - ✅ 基本機能テスト
+  - ✅ 実際のUnityPackageでのテスト
+  - ✅ エラーハンドリングの確認
 
-- [ ] シンプル表示
-  - [ ] ✅/⚠️の判定表示
-  - [ ] サマリー情報表示
+- ✅ パフォーマンス最適化
+  - ✅ 一時ファイル管理の改善
+  - ✅ メモリリーク対策
 
-- [ ] 詳細表示
-  - [ ] 検出項目一覧表示
-  - [ ] ファイルパス表示
-  - [ ] 行番号表示（可能な場合）
-  - [ ] URL一覧表示
-
-- [ ] エクスポート機能
-  - [ ] JSON形式
-  - [ ] Markdown形式
-  - [ ] テキスト形式
-
-**Phase 4完了の定義**:
-- 結果が画面に表示される
-- 詳細画面が動作する
-- エクスポートができる
-
-#### Phase 5: 設定機能とブラッシュアップ
-**目標**: アプリの完成
-
-- [ ] 設定機能
-  - [ ] パターンプリセット選択
-  - [ ] 個別パターンのON/OFF
-  - [ ] 除外設定
-  - [ ] テーマ切り替え
-
-- [ ] UI/UX改善
-  - [ ] アニメーション追加
-  - [ ] エラーメッセージの改善
-  - [ ] ローディング表示の改善
-
-- [ ] ドキュメント整備
-  - [ ] README完成版
-  - [ ] 利用規約完成版
-  - [ ] ライセンス情報
-  - [ ] 使い方ガイド
-
-**Phase 5完了の定義**:
-- 全ての基本機能が動作する
-- ドキュメントが揃っている
-- 配布可能な品質
-
-#### Phase 6: テストとリリース準備
-**目標**: 公開準備
-
-- [ ] テスト
-  - [ ] 機能テスト
-  - [ ] 実際のUnityPackageでのテスト
-  - [ ] 誤検出の確認と調整
-
-- [ ] パフォーマンス最適化
-  - [ ] 大容量ファイルへの対応
-  - [ ] スキャン速度の改善
-
-- [ ] リリース準備
-  - [ ] インストーラー作成
-  - [ ] コード署名
-  - [ ] GitHub Release準備
-
-**Phase 6完了の定義**:
-- 安定して動作する
-- インストーラーが完成
-- 公開可能な状態
+- ✅ リリース準備
+  - ✅ electron-builderでのパッケージング
+  - ✅ バージョン管理（v0.9.0）
+  - ✅ GitHub Release準備
 
 ## 7. リスクと対策
 
@@ -739,16 +668,26 @@ unitypackage-scanner/
 - **分析結果について製作者は責任を負わない**
 - **オープンソースプロジェクトである**
 
-## 9. 今後の拡張可能性
+## 9. 今後の拡張可能性（v1.0.0以降）
 
-- より高度なパターン追加
-- 機械学習による検出精度向上（将来的な検討）
-- コミュニティからのパターン投稿機能
-- バッチ処理（複数ファイル一括スキャン）
-- CLI版の提供
-- CI/CD統合
-- 多言語対応
-- プラグインシステム（カスタムパターン追加）
+### v1.0.0 リリース予定機能
+- **設定機能の復活**: パターンカスタマイズ、除外設定
+- **テーマ機能**: Light/Dark モード切り替え
+- **多言語対応**: 日本語/英語の切り替え
+- **注意事項ダイアログ**: 初回起動時の免責事項表示
+
+### 将来の拡張計画
+- **より高度なパターン追加**: コミュニティからの提案に基づく
+- **バッチ処理**: 複数ファイル一括スキャン
+- **レポート機能**: PDF形式でのレポート出力
+- **CLI版の提供**: コマンドライン版の開発
+- **CI/CD統合**: GitHub Actions での自動スキャン
+- **プラグインシステム**: カスタムパターン追加API
+
+### 検討中の機能
+- 機械学習による検出精度向上（精度向上が確認できた場合）
+- クラウド版（オンライン版）の提供
+- 企業向け機能（チーム共有、監査ログ）
 
 ## 11. 開発ワークフロー・CI/CD
 
@@ -770,7 +709,7 @@ curl -fsSL https://get.pnpm.io/install.sh | sh -
 **プロジェクトのセットアップ:**
 ```bash
 # リポジトリのクローン
-git clone https://github.com/朔日工房/unitypackage-scanner.git
+git clone https://github.com/sakuhanight/unitypackage-scanner.git
 cd unitypackage-scanner
 
 # 依存関係のインストール
