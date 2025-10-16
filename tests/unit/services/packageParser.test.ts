@@ -219,29 +219,32 @@ describe('PackageParser', () => {
       const validGuid = 'abcd1234567890abcdef1234567890ab';
       // Clear all mocks first
       vi.clearAllMocks();
-      
+
+      // Create a new parser instance for this test
+      const testParser = new PackageParser(mockTempDir);
+
       // Reset default mocks
       mockFs.pathExists.mockResolvedValue(true);
       mockFs.ensureDir.mockResolvedValue(undefined);
       mockFs.remove.mockResolvedValue(undefined);
-      mockFs.stat.mockResolvedValue({ 
+      mockFs.stat.mockResolvedValue({
         size: 1024,
         isDirectory: vi.fn().mockReturnValue(false),
-        isFile: vi.fn().mockReturnValue(true) 
+        isFile: vi.fn().mockReturnValue(true)
       } as any);
       mockFs.readdir.mockResolvedValue([]);
       mockFs.access.mockResolvedValue(undefined);
       mockFs.readFile.mockResolvedValue('mock content');
       mockTar.extract.mockResolvedValue(undefined);
-      
+
       // Set specific mocks for this test
       mockFs.readdir.mockResolvedValue([validGuid]);
 
       mockFs.stat
         .mockResolvedValueOnce({ size: 1024 } as any) // main file
-        .mockResolvedValueOnce({ 
+        .mockResolvedValueOnce({
           isDirectory: vi.fn().mockReturnValue(true),
-          isFile: vi.fn().mockReturnValue(false) 
+          isFile: vi.fn().mockReturnValue(false)
         } as any) // GUID dir
         .mockResolvedValueOnce({ size: 512 } as any); // asset file
 
@@ -254,6 +257,8 @@ describe('PackageParser', () => {
         readFileCalls.push(content);
       }
 
+      // Clear previous implementation
+      mockFs.readFile.mockReset();
       mockFs.readFile.mockImplementation((filePath: string) => {
         if (filePath.includes('pathname')) {
           return Promise.resolve(originalPath);
@@ -264,7 +269,7 @@ describe('PackageParser', () => {
         return Promise.reject(new Error('File not found'));
       });
 
-      return packageParser.parsePackage('/test/package.unitypackage');
+      return testParser.parsePackage('/test/package.unitypackage');
     };
 
     it.skip('should detect C# script files', async () => {

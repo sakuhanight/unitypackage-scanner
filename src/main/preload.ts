@@ -1,31 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron';
-
-// 型定義
-export interface ScanResult {
-  id: string;
-  filePath: string;
-  scanDate: string;
-  status: 'completed' | 'error';
-  findings: ScanFinding[];
-  summary: {
-    critical: number;
-    warning: number;
-    info: number;
-    total: number;
-  };
-}
-
-export interface ScanFinding {
-  id: string;
-  severity: 'critical' | 'warning' | 'info';
-  category: 'network' | 'fileSystem' | 'process' | 'native' | 'reflection' | 'registry';
-  pattern: string;
-  filePath: string;
-  lineNumber: number;
-  context: string;
-  description: string;
-}
-
+import { ScanResult, ScanProgress, ScanOptions } from '../shared/types';
 
 export interface Result<T> {
   success: boolean;
@@ -36,9 +10,8 @@ export interface Result<T> {
 // 安全なAPI公開
 contextBridge.exposeInMainWorld('electronAPI', {
   // パッケージスキャン
-  scanPackage: (filePath: string, options?: any): Promise<Result<ScanResult>> =>
+  scanPackage: (filePath: string, options?: ScanOptions): Promise<Result<ScanResult>> =>
     ipcRenderer.invoke('scan-package', { filePath, options }),
-
 
   // バージョン情報
   getVersion: (): Promise<string> =>
@@ -58,12 +31,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     });
   },
 
-
   // 進行状況の監視
-  onScanProgress: (callback: (progress: any) => void) => {
-    const subscription = (_: any, progress: any) => callback(progress);
+  onScanProgress: (callback: (progress: ScanProgress) => void) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const subscription = (_: any, progress: ScanProgress) => callback(progress);
     ipcRenderer.on('scan-progress', subscription);
-    
+
     // サブスクリプション解除用の関数を返す
     return () => ipcRenderer.off('scan-progress', subscription);
   },
@@ -72,18 +45,18 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onFileDropped: (callback: (filePath: string) => void) => {
     return ipcRenderer.on('file-dropped', (_, filePath) => callback(filePath));
   },
-
 });
 
 // グローバル型定義
 declare global {
   interface Window {
     electronAPI: {
-      scanPackage: (filePath: string, options?: any) => Promise<Result<ScanResult>>;
+      scanPackage: (filePath: string, options?: ScanOptions) => Promise<Result<ScanResult>>;
       getVersion: () => Promise<string>;
       openFileDialog: () => Promise<string | null>;
       processDroppedFile: (file: File) => Promise<string | null>;
-      onScanProgress: (callback: (progress: any) => void) => () => void;
+      onScanProgress: (callback: (progress: ScanProgress) => void) => () => void;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       onFileDropped: (callback: (filePath: string) => void) => any;
     };
   }

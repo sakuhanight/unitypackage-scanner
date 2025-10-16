@@ -228,9 +228,9 @@ export class SettingsDefaults {
   static readonly EXTENSION_FILE = ExtensionConstants.DEFAULT_EXTENSION_FILE;
   static readonly EXTENSION_PRESET = ExtensionConstants.DEFAULT_EXTENSION_PRESET;
   static readonly MAX_FILE_SIZE = ScanConstants.DEFAULT_MAX_FILE_SIZE;
-  
+
   // 高度な設定
-  static readonly CUSTOM_PATTERNS: any[] = [];
+  static readonly CUSTOM_PATTERNS: unknown[] = [];
   static readonly EXCLUDE_PATHS: string[] = [];
   static readonly AUTO_SCAN = false;
   static readonly SAVE_REPORTS = false;

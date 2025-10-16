@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 
 interface FileUploaderProps {
   onFileSelect: (filePath: string) => void;

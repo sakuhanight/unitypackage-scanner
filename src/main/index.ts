@@ -1,5 +1,6 @@
 import { app, BrowserWindow, ipcMain, dialog } from 'electron';
 import * as path from 'path';
+import * as os from 'os';
 import { PackageParser } from './services/packageParser';
 import { PatternMatcher } from './services/scanner/patternMatcher';
 import { ScanProgress } from '../shared/types';
@@ -182,7 +183,7 @@ class Application {
     ipcMain.handle('process-dropped-file', async (_, { name, data }) => {
       try {
         const fs = await import('fs-extra');
-        const tempPath = path.join(require('os').tmpdir(), 'unitypackage-scanner-drop', name);
+        const tempPath = path.join(os.tmpdir(), 'unitypackage-scanner-drop', name);
         
         // 一時ディレクトリを作成
         await fs.ensureDir(path.dirname(tempPath));
