@@ -57,8 +57,8 @@ jobs:
 
           # Copy files
           Copy-Item "release/unitypackage-scanner-$version.exe" "release-archive/"
-          Copy-Item "LICENSE" "release-archive/"
-          Copy-Item "README.md" "release-archive/"
+          Copy-Item "LICENSE" "release-archive/LICENSE.txt"
+          Copy-Item "README.md" "release-archive/Readme.txt"
 
           # Create zip
           Compress-Archive -Path "release-archive/*" -DestinationPath "release/$zipName"
