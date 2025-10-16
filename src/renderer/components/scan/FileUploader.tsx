@@ -119,8 +119,6 @@ export const FileUploader: React.FC<FileUploaderProps> = ({ onFileSelect }) => {
         </h4>
         <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
           <li>• ファイル形式: .unitypackage</li>
-          <li>• 最大ファイルサイズ: 100MB</li>
-          <li>• Unity 2022.3.22f1 対応</li>
           <li>• 各種Unityアセット・パッケージファイル</li>
         </ul>
       </div>
