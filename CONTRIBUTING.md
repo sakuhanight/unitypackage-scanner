@@ -122,7 +122,6 @@ pnpm test
 
 - **GitHub Discussions**: [こちら](https://github.com/sakuhanight/unitypackage-scanner/discussions)
 - **Issues**: 具体的なバグや機能要望
-- **直接連絡**: sakuha@tsuitachi.net
 
 ## 🎯 貢献の優先度
 
@@ -154,5 +153,4 @@ pnpm test
 
 ---
 
-**製作**: 朔日工房 (tsuitachi-studio) / 鴇峰朔華  
-**連絡先**: sakuha@tsuitachi.net
+**製作**: 朔日工房 (tsuitachi-studio) / 鴇峰朔華

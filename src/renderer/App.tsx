@@ -137,11 +137,6 @@ export const App: React.FC = () => {
         {/* フッター */}
         <footer className="text-center mt-12 text-sm text-gray-500 dark:text-gray-400">
           <p>© 2025 朔日工房 (tsuitachi-studio) / 鴇峰朔華</p>
-          <p className="mt-1">
-            <a href="mailto:sakuha@tsuitachi.net" className="hover:text-gray-700 dark:hover:text-gray-200">
-              sakuha@tsuitachi.net
-            </a>
-          </p>
         </footer>
       </div>
 

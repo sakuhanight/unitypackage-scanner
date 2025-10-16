@@ -1271,5 +1271,4 @@ module.exports = {
 ---
 
 *製作者: 朔日工房 (tsuitachi-studio) / 鴇峰朔華*  
-*連絡先: sakuha@tsuitachi.net*  
 *最終更新: 2025年10月*

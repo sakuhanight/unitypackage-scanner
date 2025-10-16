@@ -70,7 +70,6 @@ UnityPackageファイル（.unitypackage）をアプリにドラッグ&ドロッ
 
 - **バグ報告・機能要望**: [GitHub Issues](https://github.com/sakuhanight/unitypackage-scanner/issues)
 - **使い方の質問**: [GitHub Discussions](https://github.com/sakuhanight/unitypackage-scanner/discussions)
-- **直接連絡**: sakuha@tsuitachi.net
 
 ## 📄 詳細情報
 
