@@ -46,6 +46,7 @@
   },
   "devDependencies": {
     "@reduxjs/toolkit": "^2.0.1",
+    "@tailwindcss/postcss": "^4.1.14",
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^24.7.2",
     "@types/react": "^19.2.2",
@@ -77,11 +78,11 @@
     "fs-extra": "^11.3.2",
     "graceful-fs": "^4.2.11",
     "jsonfile": "^6.1.0",
-    "universalify": "^2.0.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-redux": "^9.0.4",
-    "tar": "^7.5.1"
+    "tar": "^7.5.1",
+    "universalify": "^2.0.1"
   },
   "engines": {
     "node": ">=18.0.0",
