@@ -40,6 +40,7 @@ jobs:
         run: pnpm run package:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Upload release artifacts (Windows)
         uses: actions/upload-artifact@v4

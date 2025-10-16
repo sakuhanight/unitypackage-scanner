@@ -107,9 +107,7 @@
     },
     "win": {
       "target": "nsis",
-      "sign": false,
-      "signingHashAlgorithms": [],
-      "signAndEditExecutable": false
+      "forceCodeSigning": false
     },
     "linux": {
       "target": "AppImage",
