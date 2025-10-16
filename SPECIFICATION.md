@@ -28,11 +28,11 @@ UnityPackage（.unitypackage）ファイルの内容をパターンマッチン�
 - **スタイリング**: Tailwind CSS v4
 - **状態管理**: React Hooks（useState, useCallback, useEffect）
 - **パッケージマネージャ**: pnpm
-- **パッケージング**: Electron Builder
+- **パッケージング**: Electron Builder（v0.9.0: Windows専用）
 - **解析エンジン**: 正規表現 + パターンマッチング
 - **ファイル処理**: tar, fs-extra（UnityPackage展開）
 - **テスト**: Vitest (ユニットテスト), Playwright (E2Eテスト)
-- **CI/CD**: GitHub Actions
+- **CI/CD**: GitHub Actions（Windows専用ビルド）
 - **コード品質**: ESLint, Prettier
 
 ## 2. 機能要件
@@ -215,9 +215,15 @@ sample.unitypackage (tar.gz)
 - 外部通信なし（完全オフライン動作）
 
 ### 3.3 互換性
-- 対応OS: Windows 10+, macOS 11+, Linux (Ubuntu 20.04+)
-- Electron: 最新LTS版
-- Node.js: 18.x以上
+
+**v0.9.0 現在:**
+- **対応OS**: Windows 10 以降（64bit）のみ
+- **Electron**: 最新LTS版
+- **Node.js**: 18.x以上
+
+**将来対応予定（v1.0.0以降）:**
+- macOS 11 (Big Sur) 以降
+- Linux (Ubuntu 20.04 以降)
 
 ### 3.4 ユーザビリティ
 - 初回起動時の注意事項表示（利用規約同意必須）
@@ -749,7 +755,7 @@ pnpm build:linux # Linux向け
 - `push` to `main` / `develop`
 - Pull Request作成・更新
 
-**実行内容:**
+**実行内容（v0.9.0: Windows専用）:**
 ```yaml
 name: CI
 
@@ -764,7 +770,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        # v0.9.0: Windows専用ビルド
+        # v1.0.0以降で macOS, Linux対応予定
+        os: [windows-latest]
         node-version: [18.x, 20.x]
     
     steps:
@@ -809,8 +817,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    
+        # v0.9.0: Windows専用ビルド
+        os: [windows-latest]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -843,14 +852,14 @@ jobs:
 - すべてのテストが通過
 - Lintエラーなし
 - TypeScript型エラーなし
-- すべてのOSでビルド成功
+- Windows版ビルド成功
 
 #### 11.2.2 リリースワークフロー (.github/workflows/release.yml)
 
 **トリガー条件:**
-- タグのプッシュ（例: `v1.0.0`）
+- タグのプッシュ（例: `v0.9.0`）
 
-**実行内容:**
+**実行内容（v0.9.0: Windows専用）:**
 ```yaml
 name: Release
 
@@ -861,10 +870,9 @@ on:
 
 jobs:
   release:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+    # v0.9.0: Windows専用リリース
+    # v1.0.0以降で macOS, Linux対応予定
+    runs-on: windows-latest
     
     steps:
       - name: Checkout
@@ -888,34 +896,49 @@ jobs:
         run: pnpm test
       
       - name: Build
-        run: pnpm build:${{ matrix.os }}
+        run: pnpm build
+
+      - name: Package application (Windows)
+        run: pnpm run package:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Code sign (Windows)
-        if: matrix.os == 'windows-latest'
-        run: # コード署名処理
-      
-      - name: Code sign (macOS)
-        if: matrix.os == 'macos-latest'
-        run: # コード署名処理
-      
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: windows-release
+          path: |
+            release/*.exe
+            release/*.zip
+
+  create-release:
+    needs: release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            dist/*.exe
-            dist/*.dmg
-            dist/*.AppImage
-            dist/*.deb
-            dist/*.rpm
+            windows-release/*
+          body: |
+            ## ゆにぱけスキャナー v${{ github.ref_name }}
+
+            **Windows専用リリース**
+
+            このバージョンはWindows 10以降（64bit）専用です。
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-**成果物:**
-- Windows: `.exe` インストーラー
+**成果物（v0.9.0）:**
+- Windows: `.exe` インストーラー（NSIS形式）
+
+**将来の成果物（v1.0.0以降）:**
 - macOS: `.dmg` インストーラー
 - Linux: `.AppImage`, `.deb`, `.rpm`
 
@@ -1225,13 +1248,14 @@ Conventional Commitsに従ってください:
   - 自動生成されたノートを確認
   - 必要に応じて手動編集
 
-#### 11.5.3 リリースチェックリスト
+#### 11.5.3 リリースチェックリスト（v0.9.0）
 
 - [ ] CHANGELOGを更新
 - [ ] READMEのバージョン表記を更新
 - [ ] ドキュメントを更新
 - [ ] 全テスト通過確認
-- [ ] 各OS版の動作確認
+- [ ] Windows版の動作確認（実機テスト）
+- [ ] インストーラーの動作確認
 - [ ] リリースノート作成
 - [ ] タグプッシュ
 

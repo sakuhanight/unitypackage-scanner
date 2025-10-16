@@ -19,17 +19,19 @@
 ## 📥 ダウンロード
 
 ### システム要件
-- **Windows**: Windows 10 以降
-- **macOS**: macOS 10.15 以降  
-- **Linux**: Ubuntu 18.04 以降
+- **Windows**: Windows 10 以降（64bit）
+
+> **📝 注意**: 現在のバージョン（v0.9.0）はWindows専用です。macOS・Linux版は将来のバージョンで対応予定です。
 
 ### インストール方法
 1. [📦 最新版をダウンロード](https://github.com/sakuhanight/unitypackage-scanner/releases)
-2. お使いのOSに合ったファイルを選択:
-   - Windows: `unitypackage-scanner-Setup-0.9.0.exe`
-   - macOS: `unitypackage-scanner-0.9.0.dmg`
-   - Linux: `unitypackage-scanner-0.9.0.AppImage`
+2. `unitypackage-scanner-Setup-0.9.0.exe` をダウンロード
 3. ダウンロードしたファイルを実行してインストール
+4. インストーラーの指示に従ってセットアップを完了
+
+### 将来対応予定のプラットフォーム
+- **macOS**: macOS 11 (Big Sur) 以降（v1.0.0以降で対応予定）
+- **Linux**: Ubuntu 20.04 以降（v1.0.0以降で対応予定）
 
 ## 🚀 使い方
 

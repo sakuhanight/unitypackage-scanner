@@ -7,10 +7,9 @@ on:
 
 jobs:
   release:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+    # v0.9.0: Windows専用リリース
+    # v1.0.0以降で macOS, Linux対応予定
+    runs-on: windows-latest
     
     steps:
       - name: Checkout
@@ -38,52 +37,17 @@ jobs:
         run: pnpm build
       
       - name: Package application (Windows)
-        if: matrix.os == 'windows-latest'
         run: pnpm run package:win
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Package application (macOS)
-        if: matrix.os == 'macos-latest'
-        run: pnpm run package:mac
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-      
-      - name: Package application (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        run: pnpm run package:linux
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Upload release artifacts (Windows)
-        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v3
         with:
           name: windows-release
           path: |
             release/*.exe
             release/*.zip
-      
-      - name: Upload release artifacts (macOS)
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v3
-        with:
-          name: macos-release
-          path: |
-            release/*.dmg
-            release/*.zip
-      
-      - name: Upload release artifacts (Linux)
-        if: matrix.os == 'ubuntu-latest'
-        uses: actions/upload-artifact@v3
-        with:
-          name: linux-release
-          path: |
-            release/*.AppImage
-            release/*.deb
-            release/*.rpm
-            release/*.tar.gz
 
   create-release:
     needs: release
@@ -101,8 +65,20 @@ jobs:
         with:
           files: |
             windows-release/*
-            macos-release/*
-            linux-release/*
+          body: |
+            ## ゆにぱけスキャナー v${{ github.ref_name }}
+
+            **Windows専用リリース**
+
+            このバージョンはWindows 10以降（64bit）専用です。
+            macOS・Linux版は将来のバージョン（v1.0.0以降）で対応予定です。
+
+            ### インストール方法
+            1. `unitypackage-scanner-Setup-*.exe` をダウンロード
+            2. ダウンロードしたファイルを実行してインストール
+
+            ### 主な変更点
+            自動生成されたリリースノートを参照してください。
           generate_release_notes: true
           draft: false
           prerelease: false

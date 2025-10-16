@@ -76,7 +76,7 @@ class Application {
       // 本番リリースではDevToolsを無効化
       // this.mainWindow.webContents.openDevTools();
     } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
+      this.mainWindow.loadFile(path.join(__dirname, '../../renderer/index.html'));
     }
 
     // ウィンドウの準備ができたら表示
