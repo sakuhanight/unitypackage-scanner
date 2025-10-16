@@ -58,7 +58,8 @@ class Application {
       minWidth: AppConstants.MIN_WINDOW_WIDTH,
       minHeight: AppConstants.MIN_WINDOW_HEIGHT,
       show: false,
-      titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+      titleBarStyle: process.platform === 'darwin' ? 'default' : 'default',
+      frame: true,
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
