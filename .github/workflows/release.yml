@@ -67,7 +67,7 @@ jobs:
           Remove-Item -Recurse -Force "release-archive"
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             release/unitypackage-scanner-*.exe
