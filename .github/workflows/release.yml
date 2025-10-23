@@ -19,6 +19,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
       
+      - name: Configure git to use HTTPS
+        run: git config --global url."https://github.com/".insteadOf git@github.com:
+      
       - name: Install pnpm
         uses: pnpm/action-setup@v4
       
