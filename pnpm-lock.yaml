@@ -71,7 +71,7 @@ devDependencies:
     specifier: ^9.2.1
     version: 9.2.1
   electron:
-    specifier: ^38.2.2
+    specifier: ^38.4.0
     version: 38.4.0
   electron-builder:
     specifier: ^26.0.12

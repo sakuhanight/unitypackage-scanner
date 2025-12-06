@@ -15,12 +15,75 @@ class Application {
     this.packageParser = new PackageParser();
     this.patternMatcher = new PatternMatcher();
     
-    app.whenReady().then(async () => {
-      // パターンマッチャーを初期化
-      await this.patternMatcher.initialize();
+    // macOS固有のアプリケーション設定
+    if (process.platform === 'darwin') {
+      app.setAboutPanelOptions({
+        applicationName: AppConstants.APP_NAME,
+        applicationVersion: app.getVersion(),
+        credits: 'Unity Package Security Scanner'
+      });
+    }
+    
+    // 未処理のPromise拒否をキャッチ
+    process.on('unhandledRejection', (reason, promise) => {
+      console.error('未処理のPromise拒否:', reason);
+      console.error('Promise:', promise);
+    });
+    
+    // 未処理の例外をキャッチ
+    process.on('uncaughtException', (error) => {
+      console.error('未処理の例外:', error);
       
-      this.createWindow();
-      this.setupIPC();
+      // クリティカルエラー時はアプリケーションを終了
+      if (this.mainWindow && !this.mainWindow.isDestroyed()) {
+        dialog.showErrorBox(
+          'クリティカルエラー',
+          `予期しないエラーが発生しました:\n${error.message}`
+        );
+      }
+      
+      // クリーンアップしてから終了
+      this.cleanup().then(() => {
+        process.exit(1);
+      });
+    });
+    
+    app.whenReady().then(async () => {
+      // V8/Node.js初期化の安定化のため遅延を追加
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      try {
+        console.log('アプリケーション初期化開始');
+        
+        // まずはWindowを作成（UIを表示）
+        this.createWindow();
+        this.setupIPC();
+        
+        console.log('UI初期化完了、パターンマッチャー初期化開始');
+        
+        // パターンマッチャーを遅延初期化（UIが表示された後）
+        setTimeout(async () => {
+          try {
+            await this.patternMatcher.initialize();
+            console.log('パターンマッチャー初期化完了');
+          } catch (error) {
+            console.warn('パターンマッチャーの初期化に失敗、基本モードで継続:', error);
+          }
+        }, 500);
+        
+      } catch (error) {
+        console.error('アプリケーションの初期化に失敗:', error);
+        
+        // エラーダイアログを表示
+        const { dialog } = await import('electron');
+        dialog.showErrorBox(
+          'アプリケーション起動エラー', 
+          `アプリケーションの初期化に失敗しました:\n${error instanceof Error ? error.message : '不明なエラー'}`
+        );
+        
+        // アプリケーションを終了
+        app.quit();
+      }
     });
 
     app.on('window-all-closed', async () => {
@@ -64,20 +127,30 @@ class Application {
       webPreferences: {
         nodeIntegration: false,
         contextIsolation: true,
-        preload: path.join(__dirname, '../../preload.js'),
+        preload: path.join(__dirname, '../preload.js'),
         webSecurity: true,
-        allowRunningInsecureContent: false
+        allowRunningInsecureContent: false,
+        // macOS固有の最適化設定
+        ...(process.platform === 'darwin' && {
+          experimentalFeatures: false,
+          enableBlinkFeatures: '',
+          disableBlinkFeatures: 'Accelerated2dCanvas,AcceleratedSmallCanvases'
+        })
       }
     });
 
     // 開発環境での設定
     const isDev = !app.isPackaged;
     if (isDev) {
-      this.mainWindow.loadURL(DevConstants.DEV_SERVER_URL);
+      // 開発サーバーが利用可能な場合のみ使用、そうでなければビルドされたファイルを使用
+      this.mainWindow.loadURL(DevConstants.DEV_SERVER_URL).catch(() => {
+        // フォールバック：ビルドされたファイルを使用
+        this.mainWindow!.loadFile(path.join(__dirname, '../renderer/index.html'));
+      });
       // 本番リリースではDevToolsを無効化
       // this.mainWindow.webContents.openDevTools();
     } else {
-      this.mainWindow.loadFile(path.join(__dirname, '../../renderer/index.html'));
+      this.mainWindow.loadFile(path.join(__dirname, '../renderer/index.html'));
     }
 
     // ウィンドウの準備ができたら表示
@@ -198,6 +271,17 @@ class Application {
       }
     });
 
+  }
+
+  /**
+   * アプリケーションのクリーンアップ
+   */
+  private async cleanup(): Promise<void> {
+    try {
+      await this.packageParser.cleanupAll();
+    } catch (error) {
+      console.error('クリーンアップエラー:', error);
+    }
   }
 }
 

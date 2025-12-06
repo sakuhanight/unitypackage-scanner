@@ -19,8 +19,24 @@ export class PatternMatcher {
    * デフォルトパターンを初期化
    */
   async initialize(): Promise<void> {
-    this.patterns = await this.patternLoader.loadDefaultPatterns();
-    await this.extensionDetector.initialize();
+    try {
+      this.patterns = await this.patternLoader.loadDefaultPatterns();
+      await this.extensionDetector.initialize();
+    } catch (error) {
+      console.error('PatternMatcher初期化エラー:', error);
+      
+      // フォールバック：最小限のパターンセットで初期化
+      this.patterns = [];
+      console.warn('パターンファイルが利用できません。基本的な機能のみで動作します。');
+      
+      // 拡張子検出器もフォールバックモードで初期化を試行
+      try {
+        await this.extensionDetector.initialize();
+      } catch (extensionError) {
+        console.warn('拡張子検出器の初期化にも失敗:', extensionError);
+        // 拡張子検出なしで続行
+      }
+    }
   }
 
   /**
