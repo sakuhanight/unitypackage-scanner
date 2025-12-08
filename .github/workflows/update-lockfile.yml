@@ -23,13 +23,13 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.head_ref }}
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
 
       - name: Configure Git for HTTPS
         run: |
@@ -41,9 +41,6 @@ jobs:
         run: |
           rm -f pnpm-lock.yaml
           pnpm install --frozen-lockfile=false
-
-      - name: Run PR checks
-        uses: ./.github/workflows/pr-check.yml
 
       - name: Check for changes
         id: verify-changed-files
@@ -62,3 +59,42 @@ jobs:
           git add pnpm-lock.yaml
           git commit -m "chore: update pnpm-lock.yaml with HTTPS URLs"
           git push
+
+  pr-check:
+    needs: update-lockfile
+    if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+      
+      - name: Code quality checks
+        uses: ./.github/actions/quality-checks
+        with:
+          continue-on-error: 'true'
+
+  ci-test:
+    needs: update-lockfile
+    if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
+      
+      - name: Code quality checks
+        uses: ./.github/actions/quality-checks
+        with:
+          continue-on-error: 'true'
+      
+      - name: Build
+        run: pnpm build

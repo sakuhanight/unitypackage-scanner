@@ -1,0 +1,24 @@
+name: 'Code Quality Checks'
+description: 'Run linting, type checking, and formatting checks'
+inputs:
+  continue-on-error:
+    description: 'Continue on error'
+    required: false
+    default: 'false'
+runs:
+  using: 'composite'
+  steps:
+    - name: Check code formatting
+      shell: bash
+      run: pnpm format:check
+      continue-on-error: ${{ inputs.continue-on-error == 'true' }}
+    
+    - name: Lint check
+      shell: bash
+      run: pnpm lint
+      continue-on-error: ${{ inputs.continue-on-error == 'true' }}
+    
+    - name: Type check
+      shell: bash
+      run: pnpm type-check
+      continue-on-error: ${{ inputs.continue-on-error == 'true' }}
