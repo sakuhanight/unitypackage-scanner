@@ -5,10 +5,11 @@ on:
     paths:
       - 'package.json'
       - 'pnpm-lock.yaml'
+  workflow_dispatch:
 
 jobs:
   update-lockfile:
-    if: github.actor == 'dependabot[bot]'
+    if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: write
