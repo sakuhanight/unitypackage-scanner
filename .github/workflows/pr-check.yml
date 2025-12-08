@@ -3,6 +3,7 @@ name: PR Check
 on:
   pull_request:
     branches: [main, master, develop]
+  workflow_call:
 
 jobs:
   pr-check:

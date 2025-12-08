@@ -26,7 +26,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -41,6 +41,9 @@ jobs:
         run: |
           rm -f pnpm-lock.yaml
           pnpm install --frozen-lockfile=false
+
+      - name: Run PR checks
+        uses: ./.github/workflows/pr-check.yml
 
       - name: Check for changes
         id: verify-changed-files
