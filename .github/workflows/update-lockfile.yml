@@ -62,14 +62,15 @@ jobs:
 
   pr-check:
     needs: update-lockfile
-    if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
+    if: (github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch') && needs.update-lockfile.result == 'success'
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout
+      - name: Checkout updated code
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ github.head_ref }}
       
       - name: Setup Node.js and pnpm
         uses: ./.github/actions/setup-node-pnpm
@@ -81,12 +82,14 @@ jobs:
 
   ci-test:
     needs: update-lockfile
-    if: github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch'
+    if: (github.actor == 'dependabot[bot]' || github.event_name == 'workflow_dispatch') && needs.update-lockfile.result == 'success'
     runs-on: ubuntu-latest
     
     steps:
-      - name: Checkout
+      - name: Checkout updated code
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
       
       - name: Setup Node.js and pnpm
         uses: ./.github/actions/setup-node-pnpm
