@@ -6348,8 +6348,8 @@ packages:
     resolution: {integrity: sha512-JInaHOamG8pt5+Ey8kGmdcAcg3OL9reK8ltczgHTAwNhMys/6ThXHityHxVV2p3fkw/c+MAvBHFVYHFZDmjMCQ==}
     dev: true
 
-  git@github.com+electron/node-gyp/06b29aafb7708acef8b3669835c8a7857ebc92d2:
-    resolution: {commit: 06b29aafb7708acef8b3669835c8a7857ebc92d2, repo: git@github.com:electron/node-gyp.git, type: git}
+  github.com/electron/node-gyp/06b29aafb7708acef8b3669835c8a7857ebc92d2:
+    resolution: {tarball: https://codeload.github.com/electron/node-gyp/tar.gz/06b29aafb7708acef8b3669835c8a7857ebc92d2}
     name: '@electron/node-gyp'
     version: 10.2.0-electron.1
     engines: {node: '>=12.13.0'}
