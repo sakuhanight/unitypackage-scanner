@@ -89,11 +89,6 @@
     "pnpm": ">=8.0.0"
   },
   "packageManager": "pnpm@8.15.0",
-  "pnpm": {
-    "overrides": {
-      "@electron/node-gyp": "github:electron/node-gyp#06b29aafb7708acef8b3669835c8a7857ebc92d2"
-    }
-  },
   "build": {
     "appId": "net.tsuitachi.unitypackage-scanner",
     "productName": "UnityPackageScanner",
