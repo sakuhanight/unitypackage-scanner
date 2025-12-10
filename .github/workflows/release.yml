@@ -11,84 +11,86 @@ permissions:
 
 jobs:
   release:
-    # v0.9.0: Windows専用リリース
-    # v1.0.0以降で macOS, Linux対応予定
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+            package_cmd: package:win
+            artifact_pattern: "*.exe"
+          - os: macos-latest
+            platform: macos
+            package_cmd: package:mac
+            artifact_pattern: "*.dmg"
+    
+    runs-on: ${{ matrix.os }}
     
     steps:
       - name: Checkout
         uses: actions/checkout@v6
       
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - name: Setup Node.js and pnpm
+        uses: ./.github/actions/setup-node-pnpm
       
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - name: Code quality checks
+        uses: ./.github/actions/quality-checks
         with:
-          node-version: 20.x
-          cache: 'pnpm'
-      
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      
-      - name: Run tests
-        run: pnpm test
-        continue-on-error: true
+          continue-on-error: 'true'
       
       - name: Build application
         run: pnpm build
       
-      - name: Package application (Windows)
-        run: pnpm run package:win
+      - name: Package application
+        run: pnpm run ${{ matrix.package_cmd }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Create release archive
-        shell: pwsh
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v5
+        with:
+          name: release-${{ matrix.platform }}
+          path: release/
+          retention-days: 1
+
+  create-release:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: artifacts/
+
+      - name: Prepare release files
         run: |
-          $version = "0.9.0"
-          $zipName = "unitypackage-scanner-$version-windows.zip"
-
-          # Create temp directory for archive contents
-          New-Item -ItemType Directory -Force -Path "release-archive"
-
-          # Copy files
-          Copy-Item "release/unitypackage-scanner-$version.exe" "release-archive/"
-          Copy-Item "LICENSE" "release-archive/LICENSE.txt"
-          Copy-Item "README.md" "release-archive/Readme.txt"
-
-          # Create zip
-          Compress-Archive -Path "release-archive/*" -DestinationPath "release/$zipName"
-
-          # Cleanup
-          Remove-Item -Recurse -Force "release-archive"
+          mkdir -p release-final
+          find artifacts/ -name "*.exe" -o -name "*.dmg" -o -name "*.blockmap" | xargs -I {} cp {} release-final/
+          ls -la release-final/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            release/unitypackage-scanner-*.exe
-            release/unitypackage-scanner-*.zip
-            release/*.blockmap
+          files: release-final/*
           body: |
             ## ゆにぱけスキャナー ${{ github.ref_name }}
 
-            **Windows専用リリース**
+            **マルチプラットフォームリリース**
 
-            このバージョンはWindows 10以降（64bit）専用です。
-            macOS・Linux版は将来のバージョン（v1.0.0以降）で対応予定です。
+            ### サポートプラットフォーム
+            - Windows 10以降（64bit）
+            - macOS 10.15以降（64bit）
 
             ### インストール方法
 
-            **インストーラー版（推奨）**
-            1. `unitypackage-scanner-0.9.0.exe` をダウンロード
-            2. ダウンロードしたファイルを実行してインストール
+            **Windows**
+            - `unitypackage-scanner-*.exe` をダウンロードして実行
 
-            **ポータブル版（Zip）**
-            1. `unitypackage-scanner-0.9.0-windows.zip` をダウンロード
-            2. 解凍して任意のフォルダに配置
-            3. `unitypackage-scanner-0.9.0.exe` を実行
+            **macOS**  
+            - `unitypackage-scanner-*.dmg` をダウンロードして開き、Applicationsフォルダにドラッグ
 
             ### 主な変更点
             自動生成されたリリースノートを参照してください。
